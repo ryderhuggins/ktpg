@@ -2,7 +2,7 @@ plugins {
     kotlin("multiplatform") version "1.9.20-RC2"
 }
 
-group = "me.user"
+group = "com.github.ryderhuggins"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -30,7 +30,12 @@ kotlin {
         }
     }
     sourceSets {
-        val nativeMain by getting
+        val nativeMain by getting {
+            dependencies {
+                implementation("io.ktor:ktor-network:2.3.7")
+                implementation("io.ktor:ktor-network-tls:2.3.7")
+            }
+        }
         val nativeTest by getting
     }
 }
