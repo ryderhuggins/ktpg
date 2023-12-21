@@ -1,5 +1,5 @@
+import com.github.ryderhuggins.i32ToByteArray
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class CalculatorTest {
 

@@ -1,0 +1,24 @@
+
+I'm thinking of how the API should look when reading a message from the wire...
+
+How would I want to use this package if I were implementing a database driver?
+
+
+How should I design this API?
+- Should programmers have to pick the authentication scheme up front? e.g.
+openConnectionNoPassword
+openConnectionAuthenticationCleartextPassword
+openConnectionAuthenticationMD5Password
+openConnectionAuthenticationGSS
+openConnectionAuthenticationSSPI
+
+- or should I simply expose the most basic building blocks? e.g.
+programmer calls openConnection
+programmer calls readMessage
+programmer switches on message type
+
+- or should the protocol library *try* to handle things...
+
+
+--- in other words, should the protocol library have actual knowledge/opinion on how the flow of the messages should go?
+the obvious answer seems to be "yes" - but maybe implementation should start out "dumb"?
