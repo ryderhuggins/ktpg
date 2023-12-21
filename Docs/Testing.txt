@@ -1,0 +1,8 @@
+See the pg_hba.conf file for use in a test database
+
+Connect via psql:
+psql -h 127.0.0.1 -p 5432 -d postgres
+
+Add the password-protected test user:
+create user secure1 with password 'password123';
+

@@ -34,3 +34,10 @@ fun readString(packet: ByteReadPacket): String {
 
     return s.toString()
 }
+
+sealed class AuthenticationResponse {
+    class AuthenticationOk : AuthenticationResponse()
+    class CleartextPasswordRequest : AuthenticationResponse()
+    class Md5PasswordRequest(val salt: String) : AuthenticationResponse()
+    // TODO other authentication schemes
+}

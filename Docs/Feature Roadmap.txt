@@ -1,0 +1,9 @@
+
+New Features
+- Send cleartext password response
+- Send MD5 password response
+-
+
+Refactoring/Improvements/Investments
+1. REFACTOR TO MAKE USE OF SEALED CLASSES
+2. Refactor sendStartupMessagePassword to enable an API that could create an interactive terminal application (e.g. readAuthResponse)
