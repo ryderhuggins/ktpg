@@ -34,6 +34,10 @@ fun readString(packet: ByteReadPacket): String {
         s.append(current.toChar())
         current = packet.readByte().toInt()
     }
+    if (current != 0) {
+        // this just means we hit end of input, but still need to append the last character read above
+        s.append(current.toChar())
+    }
 
     return s.toString()
 }
@@ -44,5 +48,6 @@ sealed class AuthenticationResponse {
     class Md5PasswordRequest(val salt: String) : AuthenticationResponse()
     class SaslAuthenticationRequest(val mechanism: String) : AuthenticationResponse()
     class SaslAuthenticationContinue(val saslData: String) : AuthenticationResponse()
+    class AuthenticationSASLFinal() : AuthenticationResponse()
     // TODO other authentication schemes
 }

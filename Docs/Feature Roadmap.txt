@@ -1,8 +1,8 @@
 
 New Features
-- SCRAM subsystem works
-    - build SCRAM into connection logic & test
+- SCRAM subsystem
     - refactor/cleanup and add in some tests
+    - better (more secure?) random number generation for SCRAM clientFirstMessage
     - better understanding of gs2
 - Send simple query
 - SSL/TLS (& channel binding for SASL/SCRAM)

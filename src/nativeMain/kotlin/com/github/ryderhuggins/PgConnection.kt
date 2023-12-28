@@ -59,32 +59,65 @@ class PgConnection(val host: String, val port: Int, val user: String, val databa
             .joinToString("")
     }
 
-    suspend fun performSha256Authentication(password: String) {
+    suspend fun performSha256Authentication(password: String): Result<AuthenticationResponse> {
         // send SASLInitialResponse message
         val messageType = ByteArray(1)
         messageType[0] = 'p'.code.toByte()
         val mechanism = "SCRAM-SHA-256"
         // hard-coded gs2 header for now
-        val clientFirstData = "n,,n=,r=" + getRandomString(20)
+        val gs2Header = "n,,"
+        val clientFirstMessageBare = "n=,r=" + getRandomString(24)
+        val clientFirstData = gs2Header + clientFirstMessageBare
         println("sending client-first data: $clientFirstData")
         val length = 4 + mechanism.length + 1 + 4 +  clientFirstData.length
         val saslInitialResponseMessage = messageType + i32ToByteArray(length) + mechanism.toAscii() + 0x0 + i32ToByteArray(clientFirstData.length) + clientFirstData.toAscii()
         sendChannel.writeFully(saslInitialResponseMessage)
         println("Done sending scram-sha-256 initial response")
 
-        val message = readAuthenticationResponse().getOrElse {
+        val saslContinuationMessage = readAuthenticationResponse().getOrElse {
             println("Failed to read message from server")
-            return
+            return Result.failure(it)
         }
-        if (message !is AuthenticationResponse.SaslAuthenticationContinue) {
+        if (saslContinuationMessage !is AuthenticationResponse.SaslAuthenticationContinue) {
             println("Unexpected message type")
-            return
+            return Result.failure(Throwable("Unexpected message type in SCRAM-SHA-256 authentication process. Message type: $saslContinuationMessage"))
         }
 
-        println("sasl continuation data: ${message.saslData}")
-        // here we need to check that the first part of the 'r' value is equal to the clientFirstData random string
+        println("sasl continuation data: ${saslContinuationMessage.saslData}")
+        // TODO: here we need to check that the first part of the 'r' value is equal to the clientFirstData random string
         // s is the base64-encoded salt
         // i is the iteration count
+        val serverFirstMessage = parseServerFirstMessage(saslContinuationMessage.saslData).getOrElse {
+            return Result.failure(it)
+        }
+
+        val clientFinalMessageText = getScramClientFinalMessage(password, serverFirstMessage.r, serverFirstMessage.s, serverFirstMessage.i, clientFirstMessageBare, saslContinuationMessage.saslData)
+        val clientFinalMessageSize = 4 + clientFinalMessageText.length
+        val clientFinalMessageType = ByteArray(1)
+        clientFinalMessageType[0] = 'p'.code.toByte()
+        val finalMessage = clientFinalMessageType + i32ToByteArray(clientFinalMessageSize) + clientFinalMessageText.toAscii()
+        sendChannel.writeFully(finalMessage)
+        println("Done sending client final message")
+
+        val saslFinalResponse = readAuthenticationResponse().getOrElse {
+            println("Failed to read message from server")
+            return Result.failure(it)
+        }
+        if (saslFinalResponse !is AuthenticationResponse.AuthenticationSASLFinal) {
+            println("Unexpected message type in SCRAM-SHA-256 authentication process. Expected AuthenticationSASLFinal. Got: $saslContinuationMessage")
+            return Result.failure(Throwable("Unexpected message type in SCRAM-SHA-256 authentication process. Expected AuthenticationSASLFinal. Got: $saslContinuationMessage"))
+        }
+
+        val authenticationOk = readAuthenticationResponse().getOrElse {
+            println("Failed to read message from server")
+            return Result.failure(it)
+        }
+        if (authenticationOk !is AuthenticationResponse.AuthenticationOk) {
+            println("Unexpected message type in SCRAM-SHA-256 authentication process. Expected AuthenticationOk. Got: $saslContinuationMessage")
+            return Result.failure(Throwable("Unexpected message type in SCRAM-SHA-256 authentication process. Expected AuthenticationOk. Got: $saslContinuationMessage"))
+        }
+
+        return Result.success(authenticationOk)
     }
 
 
@@ -117,6 +150,7 @@ class PgConnection(val host: String, val port: Int, val user: String, val databa
                 val saslData = readString(message.message)
                 return Result.success(AuthenticationResponse.SaslAuthenticationContinue(saslData))
             }
+            12 -> return Result.success(AuthenticationResponse.AuthenticationSASLFinal())
             else -> return Result.failure(Throwable("Unidentified authentication status value: $authenticationStatus"))
         }
     }
