@@ -34,6 +34,10 @@ kotlin {
             dependencies {
                 implementation("io.ktor:ktor-network:2.3.7")
                 implementation("io.ktor:ktor-network-tls:2.3.7")
+                implementation(project.dependencies.platform("org.kotlincrypto.hash:bom:0.4.0"))
+                implementation("org.kotlincrypto.hash:md")
+                implementation(project.dependencies.platform("org.kotlincrypto.macs:bom:0.4.0"))
+                implementation("org.kotlincrypto.macs:hmac-sha2")
             }
         }
         val nativeTest by getting

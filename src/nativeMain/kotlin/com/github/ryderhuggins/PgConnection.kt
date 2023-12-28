@@ -6,6 +6,7 @@ import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import org.kotlincrypto.hash.md.MD5
 import toAscii
 
 class PgConnection(val host: String, val port: Int, val user: String, val database: String, val optionalParameters: Map<String, String>) {
@@ -41,10 +42,56 @@ class PgConnection(val host: String, val port: Int, val user: String, val databa
         sendChannel.writeFully(cleartextPasswordMessage)
     }
 
-    suspend fun sendMd5PasswordResponse(password: String) { TODO() }
+    suspend fun sendMd5PasswordResponse(password: String, salt: String) {
+        val messageType = ByteArray(1)
+        messageType[0] = 'p'.code.toByte()
+        val inner = MD5().digest("$password$user".toByteArray())
+        val passwordHash = "md5".toByteArray() + MD5().digest(inner + salt.toByteArray())
+        val sizeOf = password.length + 4
+        val cleartextPasswordMessage = messageType + i32ToByteArray(sizeOf) + passwordHash
+        sendChannel.writeFully(cleartextPasswordMessage)
+    }
+
+    private fun getRandomString(length: Int) : String {
+        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+        return (1..length)
+            .map { allowedChars.random() }
+            .joinToString("")
+    }
+
+    suspend fun performSha256Authentication(password: String) {
+        // send SASLInitialResponse message
+        val messageType = ByteArray(1)
+        messageType[0] = 'p'.code.toByte()
+        val mechanism = "SCRAM-SHA-256"
+        // hard-coded gs2 header for now
+        val clientFirstData = "n,,n=,r=" + getRandomString(20)
+        println("sending client-first data: $clientFirstData")
+        val length = 4 + mechanism.length + 1 + 4 +  clientFirstData.length
+        val saslInitialResponseMessage = messageType + i32ToByteArray(length) + mechanism.toAscii() + 0x0 + i32ToByteArray(clientFirstData.length) + clientFirstData.toAscii()
+        sendChannel.writeFully(saslInitialResponseMessage)
+        println("Done sending scram-sha-256 initial response")
+
+        val message = readAuthenticationResponse().getOrElse {
+            println("Failed to read message from server")
+            return
+        }
+        if (message !is AuthenticationResponse.SaslAuthenticationContinue) {
+            println("Unexpected message type")
+            return
+        }
+
+        println("sasl continuation data: ${message.saslData}")
+        // here we need to check that the first part of the 'r' value is equal to the clientFirstData random string
+        // s is the base64-encoded salt
+        // i is the iteration count
+    }
+
+
 
     suspend fun readAuthenticationResponse(): Result<AuthenticationResponse> {
         val message = readMessage().getOrElse {
+            println("Failed to read message entirely.")
             return Result.failure(Throwable("Failed to read message"))
         }
 
@@ -61,6 +108,14 @@ class PgConnection(val host: String, val port: Int, val user: String, val databa
             5 -> {
                 val salt = readString(message.message)
                 return Result.success(AuthenticationResponse.Md5PasswordRequest(salt))
+            }
+            10 -> {
+                val mechanism = readString(message.message)
+                return Result.success(AuthenticationResponse.SaslAuthenticationRequest(mechanism))
+            }
+            11 -> {
+                val saslData = readString(message.message)
+                return Result.success(AuthenticationResponse.SaslAuthenticationContinue(saslData))
             }
             else -> return Result.failure(Throwable("Unidentified authentication status value: $authenticationStatus"))
         }

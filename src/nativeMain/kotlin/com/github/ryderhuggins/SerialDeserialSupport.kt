@@ -19,6 +19,9 @@ enum class MessageType(val value: Char) {
     READY_FOR_QUERY('Z')
 }
 
+/**
+ * This will read a string until null termination or until end of packet data
+ */
 fun readString(packet: ByteReadPacket): String {
     var current: Int = packet.readByte().toInt()
 
@@ -27,7 +30,7 @@ fun readString(packet: ByteReadPacket): String {
     }
 
     var s = StringBuilder()
-    while(current != 0) {
+    while(current != 0 && !packet.endOfInput) {
         s.append(current.toChar())
         current = packet.readByte().toInt()
     }
@@ -39,5 +42,7 @@ sealed class AuthenticationResponse {
     class AuthenticationOk : AuthenticationResponse()
     class CleartextPasswordRequest : AuthenticationResponse()
     class Md5PasswordRequest(val salt: String) : AuthenticationResponse()
+    class SaslAuthenticationRequest(val mechanism: String) : AuthenticationResponse()
+    class SaslAuthenticationContinue(val saslData: String) : AuthenticationResponse()
     // TODO other authentication schemes
 }

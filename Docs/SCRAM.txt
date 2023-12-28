@@ -1,0 +1,14 @@
+
+
+Relevant RFCs:
+https://datatracker.ietf.org/doc/html/rfc5802
+https://datatracker.ietf.org/doc/html/rfc7677
+https://www.rfc-editor.org/rfc/rfc5801.html -> for GS2 header information
+
+Reference this java library:
+https://github.com/ongres/scram/tree/master/client
+
+******** Learning from pgjdbc ********
+doAuthentication
+    sendScramClientFirstMessage
+    processServerFirstMessage

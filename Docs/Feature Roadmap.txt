@@ -1,9 +1,19 @@
 
 New Features
-- Send cleartext password response
-- Send MD5 password response
--
+- SCRAM subsystem works
+    - build SCRAM into connection logic & test
+    - refactor/cleanup and add in some tests
+    - better understanding of gs2
+- Send simple query
+- SSL/TLS (& channel binding for SASL/SCRAM)
 
-Refactoring/Improvements/Investments
+Refactoring/Improvements/Investments/Tech Debt
 1. REFACTOR TO MAKE USE OF SEALED CLASSES
 2. Refactor sendStartupMessagePassword to enable an API that could create an interactive terminal application (e.g. readAuthResponse)
+3. Fix the fact that the SASL Request from the server actually includes a list of mechanisms - not just 1
+
+Done
+- Send cleartext password response
+- SCRAM:
+    - PoC
+    - SCRAM-SHA-256
