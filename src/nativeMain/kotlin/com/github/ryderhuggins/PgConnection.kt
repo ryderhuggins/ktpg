@@ -9,12 +9,13 @@ import kotlinx.coroutines.IO
 import org.kotlincrypto.hash.md.MD5
 import toAscii
 
-class PgConnection(val host: String, val port: Int, val user: String, val database: String, val optionalParameters: Map<String, String>) {
+class PgConnection(private val host: String, private val port: Int, private val user: String, private val password: String, private val database: String, private val optionalParameters: Map<String, String>) {
     private lateinit var socket: Socket
     private lateinit var sendChannel: ByteWriteChannel
     private lateinit var receiveChannel: ByteReadChannel
     private lateinit var selectorManager: SelectorManager
     private var initialized: Boolean = false
+    private lateinit var startupParameters: StartupMessageResponse
 
     suspend fun initialize() {
         if (!initialized) {
@@ -34,15 +35,26 @@ class PgConnection(val host: String, val port: Int, val user: String, val databa
     }
 
 
-    suspend fun sendCleartextPasswordResponse(password: String) {
+    suspend fun sendCleartextPasswordResponse(): Result<AuthenticationResponse> {
         val messageType = ByteArray(1)
         messageType[0] = 'p'.code.toByte()
         val sizeOf = password.length + 1 + 4
         val cleartextPasswordMessage = messageType + i32ToByteArray(sizeOf) + password.toAscii() + 0x0
         sendChannel.writeFully(cleartextPasswordMessage)
+
+        val authenticationOk = readAuthenticationResponse().getOrElse {
+            println("Failed to read message from server")
+            return Result.failure(it)
+        }
+        if (authenticationOk !is AuthenticationResponse.AuthenticationOk) {
+            println("Unexpected message type in cleartext password authentication process. Expected AuthenticationOk. Got: $authenticationOk")
+            return Result.failure(Throwable("Unexpected message type in cleartext password authentication process. Expected AuthenticationOk. Got: $authenticationOk"))
+        }
+
+        return Result.success(authenticationOk)
     }
 
-    suspend fun sendMd5PasswordResponse(password: String, salt: String) {
+    suspend fun sendMd5PasswordResponse(salt: String) {
         val messageType = ByteArray(1)
         messageType[0] = 'p'.code.toByte()
         val inner = MD5().digest("$password$user".toByteArray())
@@ -52,14 +64,7 @@ class PgConnection(val host: String, val port: Int, val user: String, val databa
         sendChannel.writeFully(cleartextPasswordMessage)
     }
 
-    private fun getRandomString(length: Int) : String {
-        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
-        return (1..length)
-            .map { allowedChars.random() }
-            .joinToString("")
-    }
-
-    suspend fun performSha256Authentication(password: String): Result<AuthenticationResponse> {
+    suspend fun performSha256Authentication(): Result<AuthenticationResponse> {
         // send SASLInitialResponse message
         val messageType = ByteArray(1)
         messageType[0] = 'p'.code.toByte()
@@ -120,7 +125,43 @@ class PgConnection(val host: String, val port: Int, val user: String, val databa
         return Result.success(authenticationOk)
     }
 
+    suspend fun connect(): Boolean {
+        initialize()
+        sendStartupMessage()
+        val res = readAuthenticationResponse().getOrElse {
+            println("Failed to read auth response with error: $it")
+            close()
+        }
+        when (res) {
+            is AuthenticationResponse.AuthenticationOk -> println("Authentication succeeded - no password required")
+            is AuthenticationResponse.CleartextPasswordRequest -> {
+                println("Password requested from server")
+                sendCleartextPasswordResponse().getOrElse {
+                    return false
+                }
+            }
+            is AuthenticationResponse.Md5PasswordRequest -> {
+                println("MD5 password requested from server with salt = ${res.salt}")
+                sendMd5PasswordResponse(res.salt)
+            }
+            is AuthenticationResponse.SaslAuthenticationRequest -> {
+                println("SASL authentication requested from server with mechanism - ${res.mechanism}")
+                // TODO: mechanism is actually a list of mechanisms
+                if (res.mechanism != "SCRAM-SHA-256") {
+                    println("Error: Unsupported mechanism received from server - ${res.mechanism}")
+                }
+                performSha256Authentication().getOrElse {
+                    return false
+                }
+            }
+        }
 
+        this.startupParameters = readStartupResponse().getOrElse {
+            return false
+        }
+
+        return true
+    }
 
     suspend fun readAuthenticationResponse(): Result<AuthenticationResponse> {
         val message = readMessage().getOrElse {

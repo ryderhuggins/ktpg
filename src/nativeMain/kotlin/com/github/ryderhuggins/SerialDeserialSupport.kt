@@ -51,3 +51,10 @@ sealed class AuthenticationResponse {
     class AuthenticationSASLFinal() : AuthenticationResponse()
     // TODO other authentication schemes
 }
+
+fun getRandomString(length: Int) : String {
+    val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+    return (1..length)
+        .map { allowedChars.random() }
+        .joinToString("")
+}

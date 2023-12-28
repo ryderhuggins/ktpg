@@ -1,16 +1,15 @@
 
 New Features
-- SCRAM subsystem
-    - refactor/cleanup and add in some tests
-    - better (more secure?) random number generation for SCRAM clientFirstMessage
-    - better understanding of gs2
 - Send simple query
 - SSL/TLS (& channel binding for SASL/SCRAM)
 
 Refactoring/Improvements/Investments/Tech Debt
-1. REFACTOR TO MAKE USE OF SEALED CLASSES
-2. Refactor sendStartupMessagePassword to enable an API that could create an interactive terminal application (e.g. readAuthResponse)
-3. Fix the fact that the SASL Request from the server actually includes a list of mechanisms - not just 1
+1. Refactor sendStartupMessagePassword to enable an API that could create an interactive terminal application (e.g. readAuthResponse)
+2. SCRAM subsystem
+    - refactor/cleanup and add in some tests
+    - better (more secure?) random number generation for SCRAM clientFirstMessage
+    - better understanding of gs2
+    - read list of SCRAM mechanisms from server - it currently only reads one
 
 Done
 - Send cleartext password response
