@@ -16,10 +16,10 @@ fun xorByteArrays(b1: ByteArray, b2: ByteArray): ByteArray {
 
 fun getSaltedPassword(normalizedPassword: ByteArray, salt: ByteArray, i: Int): ByteArray {
     val ui = mutableListOf<ByteArray>()
-    var hmac = HmacSHA256(normalizedPassword)
+    val hmac = HmacSHA256(normalizedPassword)
     var prev = hmac.doFinal(salt + i32ToByteArray(1))
     ui.add(prev)
-    var curr = prev
+    var curr: ByteArray
     for (iter in 1..<i) {
         curr = hmac.doFinal(prev)
         ui.add(curr)
@@ -43,7 +43,7 @@ fun getStoredKey(clientKey: ByteArray): ByteArray {
 }
 
 fun getAuthMessage(clientFirstMessage: String, serverFirstMessage: String, clientFinalMessageWithoutProof: String): ByteArray {
-    val x = clientFirstMessage + "," + serverFirstMessage + "," + clientFinalMessageWithoutProof
+    val x = "$clientFirstMessage,$serverFirstMessage,$clientFinalMessageWithoutProof"
     println("auth message: $x")
     return x.toByteArray()
 }
@@ -59,7 +59,7 @@ fun getClientProof(clientKey: ByteArray, clientSignature: ByteArray): ByteArray 
 // TODO: unit test this
 @OptIn(ExperimentalStdlibApi::class)
 fun getScramClientFinalMessage(password: String, r: String, s: String, i: Int, clientFirstMessageBare: String, serverFirstMessage: String): String {
-    var hmac = HmacSHA256("12345".toByteArray())
+    val hmac = HmacSHA256("12345".toByteArray())
     val res = hmac.doFinal("sample message".toByteArray())
     println("hmac res: ${res.toHexString()}")
 
@@ -105,8 +105,7 @@ fun parseServerFirstMessage(serverFirstMessageText: String): Result<ScramServerF
     var s = ""
     var i = 0
     for (str in serverFirstMessageText.split(",")) {
-        val c = str[0]
-        when (c) {
+        when (val c = str[0]) {
             'r' -> { r = str.split("=")[1] }
             's' -> { s = str.split("=")[1] }
             'i' -> { i = str.split("=")[1].toInt() }

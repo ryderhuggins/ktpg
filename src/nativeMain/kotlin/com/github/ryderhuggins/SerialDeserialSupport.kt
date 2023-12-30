@@ -36,7 +36,7 @@ fun readString(packet: ByteReadPacket): String {
         return ""
     }
 
-    var s = StringBuilder()
+    val s = StringBuilder()
     while(current != 0 && !packet.endOfInput) {
         s.append(current.toChar())
         current = packet.readByte().toInt()
@@ -50,9 +50,9 @@ fun readString(packet: ByteReadPacket): String {
 }
 
 fun readString(packet: ByteReadPacket, limit: Int): String {
-    var current: Int = 0
+    var current: Int
 
-    var s = StringBuilder()
+    val s = StringBuilder()
     var count = 0
     do {
         current = packet.readByte().toInt()
@@ -73,17 +73,6 @@ sealed class AuthenticationResponse {
     // TODO other authentication schemes
 }
 
-sealed class QueryResponse {
-    data class CommandComplete(val commandTag: String) : QueryResponse()
-    class CopyInResponse : QueryResponse()
-    class CopyOutResponse : QueryResponse()
-    class RowDescription : QueryResponse()
-    class DataRow : QueryResponse()
-    class EmptyQueryResponse : QueryResponse()
-    class ErrorResponse : QueryResponse()
-    class ReadyForQuery : QueryResponse()
-    class NoticeResponse : QueryResponse()
-}
 
 data class ColumnDescriptor(val name: String,
                             val tableOid: Int,
