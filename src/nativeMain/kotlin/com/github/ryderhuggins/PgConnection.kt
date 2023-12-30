@@ -175,20 +175,20 @@ class PgConnection(private val host: String, private val port: Int, private val 
         }
 
         // read integer to determine message status
-        val authenticationStatus = message.message.readInt()
+        val authenticationStatus = message.messageBytes.readInt()
         when (authenticationStatus) {
             0 -> return Result.success(AuthenticationResponse.AuthenticationOk())
             3 -> return Result.success(AuthenticationResponse.CleartextPasswordRequest())
             5 -> {
-                val salt = readString(message.message)
+                val salt = readString(message.messageBytes)
                 return Result.success(AuthenticationResponse.Md5PasswordRequest(salt))
             }
             10 -> {
-                val mechanism = readString(message.message)
+                val mechanism = readString(message.messageBytes)
                 return Result.success(AuthenticationResponse.SaslAuthenticationRequest(mechanism))
             }
             11 -> {
-                val saslData = readString(message.message)
+                val saslData = readString(message.messageBytes)
                 return Result.success(AuthenticationResponse.SaslAuthenticationContinue(saslData))
             }
             12 -> return Result.success(AuthenticationResponse.AuthenticationSASLFinal())
@@ -218,15 +218,15 @@ class PgConnection(private val host: String, private val port: Int, private val 
                 }
                 MessageType.PARAMETER_STATUS.value -> {
                     println("Got ParameterStatus message from server")
-                    val parameterName = readString(message.message)
-                    val parameterValue = readString(message.message)
+                    val parameterName = readString(message.messageBytes)
+                    val parameterValue = readString(message.messageBytes)
                     parameterStatusMap[parameterName] = parameterValue
                     println("Got Parameter $parameterName - $parameterValue")
                 }
                 MessageType.BACKEND_KEY_DATA.value -> {
                     println("Got BackendKeydata message from server")
-                    val backendProcessId = message.message.readInt()
-                    val backendSecretKey = message.message.readInt()
+                    val backendProcessId = message.messageBytes.readInt()
+                    val backendSecretKey = message.messageBytes.readInt()
                     println("backendProcessId=$backendProcessId, backendSecretKey=$backendSecretKey")
                     backendKeyDataMap["backendProcessId"] = backendProcessId
                     backendKeyDataMap["backendSecretKey"] = backendSecretKey
@@ -264,5 +264,113 @@ class PgConnection(private val host: String, private val port: Int, private val 
         sendTerminationMessage()
         socket.close()
         selectorManager.close()
+    }
+
+    suspend fun readSimpleQueryResponse(): Result<SimpleQueryResponse> {
+        // 0 or more <RowDescription[0 or more DataRow]CommandComplete>
+        // ReadyForQuery is issued when the entire string has been processed and the backend is ready for a new query string
+        // if string is empty -> EmptyQueryResponse followed by ReadyForQuery
+        // if error -> ErrorResponse followed by ReadyForQuery
+        // In simple Query mode, the format of retrieved values is always text, except when the given command is a FETCH from a cursor
+        // declared with the BINARY option. In that case, the retrieved values are in binary format. The format codes given in the
+        // RowDescription message tell which format is being used.
+        // A frontend must be prepared to accept ErrorResponse and NoticeResponse messages whenever it is expecting any other type of message
+
+        // goal is to assemble 0 or more <RowDescription[0 or more DataRow]CommandComplete>
+        // read until ReadyForQuery -> this will follow EmptyQueryResponse, CommandComplete, or ErrorResponse
+        var message: PgWireMessage
+        // we want to populate a list of columns and list of rows
+        val columns = mutableListOf<ColumnDescriptor>()
+        val dataRows = mutableListOf<Map<String, String>>()
+        var commandTag = ""
+
+        repeat(10000) {
+            message = readMessage().getOrElse {
+                println("Error while reading message in readQueryResponse: $it")
+                return Result.failure(Throwable("Error while reading message in readQueryResponse: $it"))
+            }
+
+            when(message.messageType) {
+                MessageType.ROW_DESCRIPTION.value -> {
+                    println("Parsing Row Description message...")
+                    val columnCount = message.messageBytes.readShort()
+                    // TODO: what if this is 0?
+                    for (i in 0..<columnCount) {
+                        val name = readString(message.messageBytes)
+                        val tableOid = message.messageBytes.readInt()
+                        val columnId = message.messageBytes.readShort()
+                        val dataTypeOid = message.messageBytes.readInt()
+                        val dataTypeSize = message.messageBytes.readShort()
+                        val typeModifier = message.messageBytes.readInt()
+                        val formatCode = message.messageBytes.readShort()
+                        val c = ColumnDescriptor(name, tableOid, columnId, dataTypeOid, dataTypeSize, typeModifier, formatCode)
+                        println("Parsed column descriptor: $c")
+                        columns.add(c)
+                    }
+                }
+                MessageType.DATA_ROW.value -> {
+                    println("Parsing Row Data message...")
+                    val columnCount = message.messageBytes.readShort()
+                    val dataRow = mutableMapOf<String,String>()
+
+                    fields@ for (i in 0..<columnCount) {
+                        val fieldLength = message.messageBytes.readInt()
+                        if (fieldLength == -1) {
+                            println("Field length -1. Continuing to next iteration...")
+                            continue@fields
+                        }
+                        println("Reading value of length: $fieldLength")
+                        val columnValue = readString(message.messageBytes, fieldLength)
+                        println("Parsed column value: $columnValue")
+                        dataRow[columns[i].name] = columnValue
+                    }
+                    dataRows.add(dataRow)
+                    println("Parsed data row: $dataRow")
+                }
+                MessageType.COMMAND_COMPLETE.value -> {
+                    commandTag = readString(message.messageBytes)
+                }
+                MessageType.EMPTY_QUERY_RESPONSE.value -> {
+                    // not really anything to do here
+                    println("Received Empty Query Response message")
+                }
+                MessageType.COPY_IN_RESPONSE.value -> {
+                    println("Received Copy In Response message")
+                }
+                MessageType.COPY_OUT_RESPONSE.value -> {
+                    println("Received Copy Out Response message")
+                }
+                MessageType.ERROR_RESPONSE.value -> {
+                    val len = message.messageBytes.readByte()
+                    if (len.toInt() > 0) {
+                        println("Received Error Response message: ${readString(message.messageBytes, len.toInt())}")
+                    } else {
+                        println("Received Error Response message with no further information")
+                    }
+                }
+                MessageType.NOTICE_RESPONSE.value -> {
+                    val len = message.messageBytes.readByte()
+                    if (len.toInt() > 0) {
+                        println("Received Notice Response message: ${readString(message.messageBytes, len.toInt())}")
+                    } else {
+                        println("Received Notice Response message with no further information")
+                    }
+                }
+                MessageType.READY_FOR_QUERY.value -> {
+                    val status = message.messageBytes.readByte().toInt().toChar()
+                    println("Received Ready For Query with status: $status")
+                    return Result.success(SimpleQueryResponse(commandTag, columns, dataRows))
+                }
+            }
+        }
+        return Result.failure(Throwable("Exhausted loop counter when reading simple query response..."))
+    }
+
+    suspend fun executeSimpleQuery(sql: String) {
+        // send string
+        val messageType = ByteArray(1)
+        messageType[0] = 'Q'.code.toByte()
+        val queryMessage = messageType + i32ToByteArray(4 + sql.length + 1) + sql.toAscii() + 0x0
+        sendChannel.writeFully(queryMessage)
     }
 }

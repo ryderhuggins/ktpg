@@ -1,5 +1,6 @@
 import com.github.ryderhuggins.AuthenticationResponse
 import com.github.ryderhuggins.PgConnection
+import com.github.ryderhuggins.getRandomString
 import kotlinx.coroutines.*
 
 fun String.toAscii() = this.map { it.code.toByte() }
@@ -16,7 +17,18 @@ fun main() {
             // normally we'd loop while true here to read and print
             pgConn.connect()
 
-            // TODO: send a simple query!
+            val rando = getRandomString(10)
+            pgConn.executeSimpleQuery("INSERT INTO links (url, name)\nVALUES('https://www.$rando.com','$rando value');")
+            val insertRes = pgConn.readSimpleQueryResponse().getOrElse {
+                println("Failed: $it")
+            }
+            println("Simple query response: $insertRes")
+
+            pgConn.executeSimpleQuery("select * from links;")
+            val res = pgConn.readSimpleQueryResponse().getOrElse {
+                println("Failed: $it")
+            }
+            println("Simple query response: $res")
 
             pgConn.close()
         }

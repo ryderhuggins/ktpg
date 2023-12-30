@@ -1,6 +1,9 @@
 
+Current gameplan is to get "simple" query feature working, then go back and do cleanup, unit testing, and API surface area design
+
 New Features
 - Send simple query
+    - Accommodate this: In simple Query mode, the format of retrieved values is always text, except when the given command is a FETCH from a cursor
 - SSL/TLS (& channel binding for SASL/SCRAM)
 
 Refactoring/Improvements/Investments/Tech Debt
@@ -10,6 +13,7 @@ Refactoring/Improvements/Investments/Tech Debt
     - better (more secure?) random number generation for SCRAM clientFirstMessage
     - better understanding of gs2
     - read list of SCRAM mechanisms from server - it currently only reads one
+3. Improve message writing code to only allocate one ByteBuffer and "pack" necessary data into it
 
 Done
 - Send cleartext password response

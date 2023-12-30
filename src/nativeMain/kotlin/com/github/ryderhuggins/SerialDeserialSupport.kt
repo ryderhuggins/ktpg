@@ -7,7 +7,7 @@ internal fun i32ToByteArray(n: Int): ByteArray =
         (n shr (it * Byte.SIZE_BITS)).toByte()
     }.toByteArray()
 
-data class PgWireMessage(val messageType: Char, val message: ByteReadPacket)
+data class PgWireMessage(val messageType: Char, val messageBytes: ByteReadPacket)
 
 data class StartupMessageResponse(val parameterStatus: Map<String, String>, val backendKeyData: Map<String, Int>)
 
@@ -16,7 +16,14 @@ enum class MessageType(val value: Char) {
     ERROR_RESPONSE('E'),
     AUTHENTICATION('R'),
     PARAMETER_STATUS('S'),
-    READY_FOR_QUERY('Z')
+    READY_FOR_QUERY('Z'),
+    COMMAND_COMPLETE('C'),
+    COPY_IN_RESPONSE('G'),
+    COPY_OUT_RESPONSE('H'),
+    ROW_DESCRIPTION('T'),
+    DATA_ROW('D'),
+    EMPTY_QUERY_RESPONSE('I'),
+    NOTICE_RESPONSE('N')
 }
 
 /**
@@ -42,6 +49,20 @@ fun readString(packet: ByteReadPacket): String {
     return s.toString()
 }
 
+fun readString(packet: ByteReadPacket, limit: Int): String {
+    var current: Int = 0
+
+    var s = StringBuilder()
+    var count = 0
+    do {
+        current = packet.readByte().toInt()
+        s.append(current.toChar())
+        count++
+    } while(current != 0 && !packet.endOfInput && count < limit)
+
+    return s.toString()
+}
+
 sealed class AuthenticationResponse {
     class AuthenticationOk : AuthenticationResponse()
     class CleartextPasswordRequest : AuthenticationResponse()
@@ -51,6 +72,32 @@ sealed class AuthenticationResponse {
     class AuthenticationSASLFinal() : AuthenticationResponse()
     // TODO other authentication schemes
 }
+
+sealed class QueryResponse {
+    data class CommandComplete(val commandTag: String) : QueryResponse()
+    class CopyInResponse : QueryResponse()
+    class CopyOutResponse : QueryResponse()
+    class RowDescription : QueryResponse()
+    class DataRow : QueryResponse()
+    class EmptyQueryResponse : QueryResponse()
+    class ErrorResponse : QueryResponse()
+    class ReadyForQuery : QueryResponse()
+    class NoticeResponse : QueryResponse()
+}
+
+data class ColumnDescriptor(val name: String,
+                            val tableOid: Int,
+                            val columnId: Short,
+                            val dataTypeOid: Int,
+                            val dataTypeSize: Short,
+                            val typeModifier: Int,
+                            val formatCode: Short)
+
+data class SimpleQueryResponse(
+        val commandTag: String,
+        val columns: List<ColumnDescriptor>,
+        val dataRows: List<Map<String,String>>
+    )
 
 fun getRandomString(length: Int) : String {
     val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
