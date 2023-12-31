@@ -266,6 +266,49 @@ class PgConnection(private val host: String, private val port: Int, private val 
         selectorManager.close()
     }
 
+    suspend fun parseErrorResponseMessage(messageBytes: ByteReadPacket): Map<String, String> {
+        val errorInfo = mutableMapOf<String,String>()
+        var fieldType: Byte
+
+        // error fields defined here: https://www.postgresql.org/docs/current/protocol-error-fields.html
+        var errorKey: String
+        var errorValue: String
+        repeat (10000) {
+            fieldType = messageBytes.readByte()
+            if (fieldType.toInt() == 0) {
+                messageBytes.discard()
+                return errorInfo
+            }
+
+            errorKey = when(fieldType.toInt().toChar()) {
+                'S' -> "Severity"
+                'V' -> "Severity"
+                'C' -> "Code"
+                'M' -> "Message"
+                'D' -> "Detail"
+                'H' -> "Hint"
+                'P' -> "Position"
+                'p' -> "Internal Position"
+                'q' -> "Internal Query"
+                'W' -> "Where"
+                's' -> "Schema"
+                't' -> "Table name"
+                'c' -> "Column name"
+                'd' -> "Data type name"
+                'n' -> "Constraint name"
+                'F' -> "File"
+                'L' -> "Line"
+                'R' -> "Routine"
+                else -> "UNKNOWN"
+            }
+
+            errorValue = readString(messageBytes)
+            errorInfo[errorKey] = errorValue
+        }
+
+        return errorInfo
+    }
+
     suspend fun readSimpleQueryResponse(): Result<SimpleQueryResponse> {
         // 0 or more <RowDescription[0 or more DataRow]CommandComplete>
         // ReadyForQuery is issued when the entire string has been processed and the backend is ready for a new query string
@@ -341,12 +384,8 @@ class PgConnection(private val host: String, private val port: Int, private val 
                     println("Received Copy Out Response message")
                 }
                 MessageType.ERROR_RESPONSE.value -> {
-                    val len = message.messageBytes.readByte()
-                    if (len.toInt() > 0) {
-                        println("Received Error Response message: ${readString(message.messageBytes, len.toInt())}")
-                    } else {
-                        println("Received Error Response message with no further information")
-                    }
+                    val err = parseErrorResponseMessage(message.messageBytes)
+                    println("Received error message from server: $err")
                 }
                 MessageType.NOTICE_RESPONSE.value -> {
                     val len = message.messageBytes.readByte()

@@ -17,7 +17,7 @@ fun main() {
             // normally we'd loop while true here to read and print
             pgConn.connect()
 
-            val rando = getRandomString(10)
+            val rando = getRandomString(20)
             pgConn.executeSimpleQuery("INSERT INTO links (url, name)\nVALUES('https://www.$rando.com','$rando value');")
             val insertRes = pgConn.readSimpleQueryResponse().getOrElse {
                 println("Failed: $it")
@@ -29,6 +29,18 @@ fun main() {
                 println("Failed: $it")
             }
             println("Simple query response: $res")
+
+            pgConn.executeSimpleQuery("select fro links;")
+            val errorRes = pgConn.readSimpleQueryResponse().getOrElse {
+                println("Failed: $it")
+            }
+            println("Simple query error response: $errorRes")
+
+            pgConn.executeSimpleQuery("")
+            val emptyRes = pgConn.readSimpleQueryResponse().getOrElse {
+                println("Failed: $it")
+            }
+            println("Simple query empty response: $emptyRes")
 
             pgConn.close()
         }
