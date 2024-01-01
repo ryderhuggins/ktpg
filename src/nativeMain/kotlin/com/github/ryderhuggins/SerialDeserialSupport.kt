@@ -85,7 +85,9 @@ data class ColumnDescriptor(val name: String,
 data class SimpleQueryResponse(
         val commandTag: String,
         val columns: List<ColumnDescriptor>,
-        val dataRows: List<Map<String,String>>
+        val dataRows: List<Map<String,String>>,
+        val error: Map<String,String>,
+        val notice: Map<String, String>
     )
 
 fun getRandomString(length: Int) : String {

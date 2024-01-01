@@ -309,7 +309,7 @@ class PgConnection(private val host: String, private val port: Int, private val 
         return errorInfo
     }
 
-    suspend fun readSimpleQueryResponse(): Result<SimpleQueryResponse> {
+    suspend fun readSimpleQueryResponse(): Result<List<SimpleQueryResponse>> {
         // 0 or more <RowDescription[0 or more DataRow]CommandComplete>
         // ReadyForQuery is issued when the entire string has been processed and the backend is ready for a new query string
         // if string is empty -> EmptyQueryResponse followed by ReadyForQuery
@@ -323,9 +323,11 @@ class PgConnection(private val host: String, private val port: Int, private val 
         // read until ReadyForQuery -> this will follow EmptyQueryResponse, CommandComplete, or ErrorResponse
         var message: PgWireMessage
         // we want to populate a list of columns and list of rows
-        val columns = mutableListOf<ColumnDescriptor>()
-        val dataRows = mutableListOf<Map<String, String>>()
+        var columns = mutableListOf<ColumnDescriptor>()
+        var dataRows = mutableListOf<Map<String, String>>()
         var commandTag = ""
+        var notices = mapOf<String,String>()
+        var result = mutableListOf<SimpleQueryResponse>()
 
         repeat(10000) {
             message = readMessage().getOrElse {
@@ -372,6 +374,11 @@ class PgConnection(private val host: String, private val port: Int, private val 
                 }
                 MessageType.COMMAND_COMPLETE.value -> {
                     commandTag = readString(message.messageBytes)
+                    result.add(SimpleQueryResponse(commandTag, columns, dataRows, emptyMap(), notices))
+                    commandTag = ""
+                    columns = mutableListOf<ColumnDescriptor>()
+                    dataRows = mutableListOf<Map<String, String>>()
+                    notices = mutableMapOf<String,String>()
                 }
                 MessageType.EMPTY_QUERY_RESPONSE.value -> {
                     // not really anything to do here
@@ -386,19 +393,20 @@ class PgConnection(private val host: String, private val port: Int, private val 
                 MessageType.ERROR_RESPONSE.value -> {
                     val err = parseErrorResponseMessage(message.messageBytes)
                     println("Received error message from server: $err")
+                    result.add(SimpleQueryResponse(commandTag, columns, dataRows, err, notices))
+                    commandTag = ""
+                    columns = mutableListOf<ColumnDescriptor>()
+                    dataRows = mutableListOf<Map<String, String>>()
+                    notices = mutableMapOf<String,String>()
                 }
                 MessageType.NOTICE_RESPONSE.value -> {
-                    val len = message.messageBytes.readByte()
-                    if (len.toInt() > 0) {
-                        println("Received Notice Response message: ${readString(message.messageBytes, len.toInt())}")
-                    } else {
-                        println("Received Notice Response message with no further information")
-                    }
+                    notices = parseErrorResponseMessage(message.messageBytes)
+                    println("Received warning message from server: $notices")
                 }
                 MessageType.READY_FOR_QUERY.value -> {
                     val status = message.messageBytes.readByte().toInt().toChar()
                     println("Received Ready For Query with status: $status")
-                    return Result.success(SimpleQueryResponse(commandTag, columns, dataRows))
+                    return Result.success(result)
                 }
             }
         }

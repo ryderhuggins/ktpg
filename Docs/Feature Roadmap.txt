@@ -4,7 +4,11 @@ Current gameplan is to get "simple" query feature working, then go back and do c
 New Features
 - Send simple query
     - Accommodate this: In simple Query mode, the format of retrieved values is always text, except when the given command is a FETCH from a cursor
+- Change print statements to proper logging
 - SSL/TLS (& channel binding for SASL/SCRAM)
+
+Test TODOs
+- calling a method on a closed connection
 
 Refactoring/Improvements/Investments/Tech Debt
 1. Refactor sendStartupMessagePassword to enable an API that could create an interactive terminal application (e.g. readAuthResponse)
@@ -13,10 +17,11 @@ Refactoring/Improvements/Investments/Tech Debt
     - better (more secure?) random number generation for SCRAM clientFirstMessage
     - better understanding of gs2
     - read list of SCRAM mechanisms from server - it currently only reads one
-3. Improve message writing code to only allocate one ByteBuffer and "pack" necessary data into it
 
 Done
+- Send simple query
+    - proper ErrorResponse & NoticeResponse messages
+    - handle return values from multiple statements in a simple query
 - Send cleartext password response
 - SCRAM:
-    - PoC
-    - SCRAM-SHA-256
+    - SCRAM-SHA-256 authentication
