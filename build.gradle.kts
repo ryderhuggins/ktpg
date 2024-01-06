@@ -2,7 +2,7 @@ plugins {
     kotlin("multiplatform") version "1.9.20-RC2"
 }
 
-group = "com.github.ryderhuggins"
+group = "org.ktpg"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -27,6 +27,7 @@ kotlin {
             executable {
                 entryPoint = "main"
             }
+            staticLib()
         }
     }
     sourceSets {

@@ -1,22 +1,25 @@
 
 Current gameplan is to get "simple" query feature working, then go back and do cleanup, unit testing, and API surface area design
 
-New Features
-- Send simple query
-    - Accommodate this: In simple Query mode, the format of retrieved values is always text, except when the given command is a FETCH from a cursor
+New Features TODO
+- NEXT: EXTENDED QUERY
 - Change print statements to proper logging
 - SSL/TLS (& channel binding for SASL/SCRAM)
+- Proper native/KMP build setup - check here - https://dev.to/kotlin/how-to-build-and-publish-a-kotlin-multiplatform-library-creating-your-first-library-1bp8
 
 Test TODOs
 - calling a method on a closed connection
 
 Refactoring/Improvements/Investments/Tech Debt
+0. Refactor to DOP
 1. Refactor sendStartupMessagePassword to enable an API that could create an interactive terminal application (e.g. readAuthResponse)
 2. SCRAM subsystem
     - refactor/cleanup and add in some tests
     - better (more secure?) random number generation for SCRAM clientFirstMessage
     - better understanding of gs2
     - read list of SCRAM mechanisms from server - it currently only reads one
+3. Send simple query
+    - Accommodate this: In simple Query mode, the format of retrieved values is always text, except when the given command is a FETCH from a cursor
 
 Done
 - Send simple query

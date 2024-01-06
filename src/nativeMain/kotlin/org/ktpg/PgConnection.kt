@@ -1,4 +1,4 @@
-package com.github.ryderhuggins
+package org.ktpg
 
 import io.ktor.network.selector.*
 import io.ktor.network.sockets.*
@@ -9,7 +9,7 @@ import kotlinx.coroutines.IO
 import org.kotlincrypto.hash.md.MD5
 import toAscii
 
-class PgConnection(private val host: String, private val port: Int, private val user: String, private val password: String, private val database: String, private val optionalParameters: Map<String, String>) {
+class PgConnection internal constructor(private val host: String, private val port: Int, private val user: String, private val password: String, private val database: String, private val optionalParameters: Map<String, String>) {
     private lateinit var socket: Socket
     private lateinit var sendChannel: ByteWriteChannel
     private lateinit var receiveChannel: ByteReadChannel
@@ -17,13 +17,26 @@ class PgConnection(private val host: String, private val port: Int, private val 
     private var initialized: Boolean = false
     private lateinit var startupParameters: StartupMessageResponse
 
-    suspend fun initialize() {
+    private suspend fun initialize() {
         if (!initialized) {
             selectorManager = SelectorManager(Dispatchers.IO)
             socket = aSocket(selectorManager).tcp().connect(host, port)
             receiveChannel = socket.openReadChannel()
             sendChannel = socket.openWriteChannel(autoFlush = true)
             initialized = true
+        }
+    }
+
+    companion object {
+
+        /**
+         * This function exists solely to enforce proper setup of the connection -> calling initialize and connect
+         */
+        suspend fun getConnection(host: String, port: Int, user: String, password: String, database: String, optionalParameters: Map<String, String>): PgConnection {
+            val pgConn = PgConnection(host, port, user, password, database, optionalParameters)
+            pgConn.initialize()
+            pgConn.connect()
+            return pgConn
         }
     }
 
@@ -125,8 +138,8 @@ class PgConnection(private val host: String, private val port: Int, private val 
         return Result.success(authenticationOk)
     }
 
-    suspend fun connect(): Boolean {
-        initialize()
+    // TODO: need to flesh this out for e.g. incorrect password
+    private suspend fun connect(): Boolean {
         sendStartupMessage()
         val res = readAuthenticationResponse().getOrElse {
             println("Failed to read auth response with error: $it")
@@ -137,6 +150,7 @@ class PgConnection(private val host: String, private val port: Int, private val 
             is AuthenticationResponse.CleartextPasswordRequest -> {
                 println("Password requested from server")
                 sendCleartextPasswordResponse().getOrElse {
+                    close()
                     return false
                 }
             }
@@ -151,6 +165,7 @@ class PgConnection(private val host: String, private val port: Int, private val 
                     println("Error: Unsupported mechanism received from server - ${res.mechanism}")
                 }
                 performSha256Authentication().getOrElse {
+                    close()
                     return false
                 }
             }

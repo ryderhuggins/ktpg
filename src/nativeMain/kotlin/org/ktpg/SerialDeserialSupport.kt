@@ -1,4 +1,4 @@
-package com.github.ryderhuggins
+package org.ktpg
 
 import io.ktor.utils.io.core.*
 

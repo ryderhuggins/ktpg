@@ -21,3 +21,11 @@ RETURNING id;
 
 INSERT INTO links (url, name, last_update)
 VALUES('https://www.apple.com','Apple','2013-06-01');
+
+
+CREATE TABLE foo (
+	some_int INT NOT NULL,
+	some_text TEXT NOT NULL,
+	some_bool BOOL,
+    some_numeric NUMERIC
+);
