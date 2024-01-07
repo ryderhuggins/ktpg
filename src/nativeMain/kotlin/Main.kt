@@ -11,7 +11,7 @@ import kotlinx.coroutines.runBlocking
 fun main() {
     runBlocking {
         // change username to ryderhuggins for no password, secure1 for cleartext password, secure2 for SCRAM-SHA-256
-        val pgConn = getConnection("127.0.0.1", 5432, "secure2", "password123", "postgres", emptyMap()).getOrThrow {
+        val (pgConn, _) = getConnection("127.0.0.1", 5432, "secure2", "password123", "postgres", emptyMap()).getOrThrow {
             Throwable(it.errorString)
         }
         println("Connection received")

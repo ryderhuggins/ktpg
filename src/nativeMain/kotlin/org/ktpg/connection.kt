@@ -28,6 +28,11 @@ data class PgConnection internal constructor(
     internal val selectorManager: SelectorManager
 ) : PgConnectionResult
 
+data class PgConnectionStartupParameters internal constructor(
+    val pgConn: PgConnection,
+    val startupParameters: StartupParameters
+)
+
 data class PgConnectionFailure internal constructor(
     val errorString: String
 ) : PgConnectionResult
@@ -44,9 +49,8 @@ data object AuthenticationSASLFinal : AuthenticationResponse
 data class AuthenticationFailure(val errorString: String) : AuthenticationResponse
 // TODO other authentication schemes
 
-sealed interface StartupResponse
-data class StartupParameters(val parameterStatusMap: Map<String,String>, val backendKeyDataMap: Map<String,Int>) : StartupResponse
-data class StartupFailure(val errorString: String) : StartupResponse
+data class StartupParameters(val parameterStatusMap: Map<String,String>, val backendKeyDataMap: Map<String,Int>)
+data class StartupFailure(val errorString: String)
 
 enum class MessageType(val value: Char) {
     BACKEND_KEY_DATA('K'),
@@ -64,7 +68,7 @@ enum class MessageType(val value: Char) {
 }
 
 // TODO: use some kind of result type for this
-suspend fun getConnection(host: String, port: Int, user: String, password: String, database: String, optionalParameters: Map<String, String>): Result<PgConnection, PgConnectionFailure> {
+suspend fun getConnection(host: String, port: Int, user: String, password: String, database: String, optionalParameters: Map<String, String>): Result<PgConnectionStartupParameters, PgConnectionFailure> {
     try {
         val selectorManager = SelectorManager(Dispatchers.IO)
         val socket = aSocket(selectorManager).tcp().connect(host, port)
@@ -83,10 +87,15 @@ suspend fun getConnection(host: String, port: Int, user: String, password: Strin
             selectorManager=selectorManager
         )
 
-        return if (connect(conn)) {
-            Ok(conn)
-        } else {
-            Err(PgConnectionFailure("Failed in startup message exchange with postgres server"))
+        connect(conn).onFailure {
+            return Err(PgConnectionFailure("Failed in startup message exchange with postgres server"))
+        }.onSuccess {
+            return Ok(PgConnectionStartupParameters(conn, it))
+        }
+
+        return when (val params = connect(conn)) {
+            is Ok -> Ok(PgConnectionStartupParameters(conn, params.value))
+            is Err -> Err(PgConnectionFailure("Failed in startup message exchange with postgres server"))
         }
 
     } catch(e: Exception) {
@@ -224,7 +233,7 @@ private suspend fun performScramSha256Authentication(pgConn: PgConnection): Auth
     return authenticationOk
 }
 
-private suspend fun readStartupResponse(pgConn: PgConnection): StartupResponse {
+private suspend fun readStartupResponse(pgConn: PgConnection): Result<StartupParameters, StartupFailure> {
     // in this scenario, we should just read:
     // - AuthenticationOk, a list of ParameterStatus, a list of BackendKeyData, and ReadyForQuery
     // then return the two lists or an error
@@ -239,7 +248,7 @@ private suspend fun readStartupResponse(pgConn: PgConnection): StartupResponse {
         when(message.messageType) {
             MessageType.ERROR_RESPONSE.value -> {
                 println("Got ErrorResponse message from server")
-                return StartupFailure("Got ErrorResponse message from server")
+                return Err(StartupFailure("Got ErrorResponse message from server"))
             }
             MessageType.PARAMETER_STATUS.value -> {
                 println("Got ParameterStatus message from server")
@@ -259,7 +268,7 @@ private suspend fun readStartupResponse(pgConn: PgConnection): StartupResponse {
             MessageType.READY_FOR_QUERY.value -> {
                 println("Got ReadyForQuery message from server")
                 // we're done... return the parameters
-                return StartupParameters(parameterStatusMap, backendKeyDataMap)
+                return Ok(StartupParameters(parameterStatusMap, backendKeyDataMap))
             }
         }
         message = readMessage(pgConn)
@@ -268,11 +277,11 @@ private suspend fun readStartupResponse(pgConn: PgConnection): StartupResponse {
     if (i == 200) {
         println("Exhausted loop iterations!")
     }
-    return StartupFailure("oof")
+    return Err(StartupFailure("oof"))
 }
 
 // TODO: need to flesh this out for e.g. incorrect password
-private suspend fun connect(pgConn: PgConnection): Boolean {
+private suspend fun connect(pgConn: PgConnection): Result<StartupParameters, StartupFailure> {
     sendStartupMessage(pgConn)
     val res = readAuthenticationResponse(pgConn)
     when (res) {
@@ -282,7 +291,7 @@ private suspend fun connect(pgConn: PgConnection): Boolean {
             val authResponse = sendCleartextPasswordResponse(pgConn)
             if (authResponse !is AuthenticationOk) {
                 close(pgConn)
-                return false
+                return Err(StartupFailure("$res"))
             }
         }
         is Md5PasswordRequest -> {
@@ -298,13 +307,13 @@ private suspend fun connect(pgConn: PgConnection): Boolean {
             val authResponse = performScramSha256Authentication(pgConn)
             if (authResponse !is AuthenticationOk) {
                 close(pgConn)
-                return false
+                return Err(StartupFailure("$res"))
             }
         }
-        else -> return false
+        else -> return Err(StartupFailure("$res"))
     }
 
-    return true
+    return readStartupResponse(pgConn)
 }
 
 private suspend fun sendTerminationMessage(pgConn: PgConnection) {
