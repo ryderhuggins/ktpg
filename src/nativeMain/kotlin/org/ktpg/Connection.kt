@@ -7,7 +7,6 @@ import com.github.michaelbull.result.*
 
 import org.ktpg.*
 
-// TODO: use some kind of result type for this
 suspend fun getConnection(host: String, port: Int, user: String, password: String, database: String, optionalParameters: Map<String, String>): Result<PgConnectionStartupParameters, PgConnectionFailure> {
     try {
         val selectorManager = SelectorManager(Dispatchers.IO)
