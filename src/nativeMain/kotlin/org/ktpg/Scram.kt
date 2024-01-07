@@ -6,7 +6,7 @@ import org.kotlincrypto.hash.sha2.SHA256
 import org.kotlincrypto.macs.hmac.sha2.HmacSHA256
 import kotlin.experimental.xor
 
-fun xorByteArrays(b1: ByteArray, b2: ByteArray): ByteArray {
+internal fun xorByteArrays(b1: ByteArray, b2: ByteArray): ByteArray {
     val res = ByteArray(b1.size)
     for (i in b1.indices) {
         res[i] = b1[i] xor b2[i]
@@ -14,7 +14,7 @@ fun xorByteArrays(b1: ByteArray, b2: ByteArray): ByteArray {
     return res
 }
 
-fun getSaltedPassword(normalizedPassword: ByteArray, salt: ByteArray, i: Int): ByteArray {
+internal fun getSaltedPassword(normalizedPassword: ByteArray, salt: ByteArray, i: Int): ByteArray {
     val ui = mutableListOf<ByteArray>()
     val hmac = HmacSHA256(normalizedPassword)
     var prev = hmac.doFinal(salt + i32ToByteArray(1))
@@ -34,31 +34,31 @@ fun getSaltedPassword(normalizedPassword: ByteArray, salt: ByteArray, i: Int): B
     return res
 }
 
-fun getClientKey(saltedPassword: ByteArray): ByteArray {
+internal fun getClientKey(saltedPassword: ByteArray): ByteArray {
     return HmacSHA256(saltedPassword).doFinal("Client Key".toByteArray())
 }
 
-fun getStoredKey(clientKey: ByteArray): ByteArray {
+internal fun getStoredKey(clientKey: ByteArray): ByteArray {
     return SHA256().digest(clientKey)
 }
 
-fun getAuthMessage(clientFirstMessage: String, serverFirstMessage: String, clientFinalMessageWithoutProof: String): ByteArray {
+internal fun getAuthMessage(clientFirstMessage: String, serverFirstMessage: String, clientFinalMessageWithoutProof: String): ByteArray {
     val x = "$clientFirstMessage,$serverFirstMessage,$clientFinalMessageWithoutProof"
     println("auth message: $x")
     return x.toByteArray()
 }
 
-fun getClientSignature(storedKey: ByteArray, authMessage: ByteArray): ByteArray {
+internal fun getClientSignature(storedKey: ByteArray, authMessage: ByteArray): ByteArray {
     return HmacSHA256(storedKey).doFinal(authMessage)
 }
 
-fun getClientProof(clientKey: ByteArray, clientSignature: ByteArray): ByteArray {
+internal fun getClientProof(clientKey: ByteArray, clientSignature: ByteArray): ByteArray {
     return xorByteArrays(clientKey, clientSignature)
 }
 
 // TODO: unit test this
 @OptIn(ExperimentalStdlibApi::class)
-fun getScramClientFinalMessage(password: String, r: String, s: String, i: Int, clientFirstMessageBare: String, serverFirstMessage: String): String {
+internal fun getScramClientFinalMessage(password: String, r: String, s: String, i: Int, clientFirstMessageBare: String, serverFirstMessage: String): String {
     val hmac = HmacSHA256("12345".toByteArray())
     val res = hmac.doFinal("sample message".toByteArray())
     println("hmac res: ${res.toHexString()}")
@@ -95,12 +95,12 @@ fun getScramClientFinalMessage(password: String, r: String, s: String, i: Int, c
     return clientFinalMessageWithoutProof + ",p=" + clientProof.encodeBase64()
 }
 
-data class ScramServerFirstMessage(val r: String, val s: String, val i: Int)
+internal data class ScramServerFirstMessage(val r: String, val s: String, val i: Int)
 
 data class ClientFinalMessage(val clientFinalMessageBare: String, val clientProof: String)
 
 // TODO unit test this
-fun parseServerFirstMessage(serverFirstMessageText: String): Result<ScramServerFirstMessage> {
+internal fun parseServerFirstMessage(serverFirstMessageText: String): Result<ScramServerFirstMessage> {
     var r = ""
     var s = ""
     var i = 0
