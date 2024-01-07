@@ -39,6 +39,7 @@ kotlin {
                 implementation("org.kotlincrypto.hash:md")
                 implementation(project.dependencies.platform("org.kotlincrypto.macs:bom:0.4.0"))
                 implementation("org.kotlincrypto.macs:hmac-sha2")
+                implementation("com.michael-bull.kotlin-result:kotlin-result:1.1.18")
             }
         }
         val nativeTest by getting
