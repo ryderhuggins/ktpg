@@ -8,8 +8,11 @@ import com.github.michaelbull.result.*
 import org.ktpg.*
 import org.ktpg.wireprotocol.*
 
-suspend fun getConnection(host: String, port: Int, user: String, password: String, database: String, optionalParameters: Map<String, String>): Result<PgConnectionStartupParameters, PgConnectionFailure> {
+suspend fun getConnection(host: String, port: Int, user: String, password: String, database: String, clientParameters: Map<String, String>): Result<PgConnectionStartupParameters, PgConnectionFailure> {
     try {
+        val finalParametersList = clientParameters.toMutableMap()
+        finalParametersList.putAll(mapOf("user" to user, "database" to database))
+
         val selectorManager = SelectorManager(Dispatchers.IO)
         val socket = aSocket(selectorManager).tcp().connect(host, port)
         val receiveChannel = socket.openReadChannel()
@@ -20,7 +23,7 @@ suspend fun getConnection(host: String, port: Int, user: String, password: Strin
             user=user,
             password=password,
             database=database,
-            optionalParameters=optionalParameters,
+            clientParameters=finalParametersList,
             socket=socket,
             receiveChannel=receiveChannel,
             sendChannel=sendChannel,

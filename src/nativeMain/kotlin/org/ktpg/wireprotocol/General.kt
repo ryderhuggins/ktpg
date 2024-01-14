@@ -19,11 +19,9 @@ internal suspend fun readMessage(receiveChannel: ByteReadChannel): PgWireMessage
     return PgWireMessage(messageType, message)
 }
 
-internal suspend fun sendStartupMessage(sendChannel: ByteWriteChannel, user: String, database: String) {
-    val parameters = listOf("user", user, "database", database)
-    val size = parameters.sumOf { it.length + 1 } + 9 // 4 for protocol version, 4 for size, 1 for extra null byte
-    val startupMessage = i32ToByteArray(size) + 0x0 + 0x03 + 0x0 + 0x0 + parameters.flatMap { it.toAscii() + 0x0 } + 0x0
-    sendChannel.writeFully(startupMessage)
+internal suspend fun sendStartupMessage(sendChannel: ByteWriteChannel, startupMessage: StartupMessage) {
+    val startupMessageBytes = serialize(startupMessage)
+    sendChannel.writeFully(startupMessageBytes)
 }
 
 internal suspend fun readStartupResponse(receiveChannel: ByteReadChannel): Result<StartupParameters, StartupFailure> {

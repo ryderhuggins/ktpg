@@ -13,7 +13,7 @@ data class PgConnection internal constructor(
     val user: String,
     internal val password: String,
     val database: String,
-    val optionalParameters: Map<String, String>,
+    val clientParameters: Map<String, String>,
     internal val socket: Socket,
     internal val receiveChannel: ByteReadChannel,
     internal val sendChannel: ByteWriteChannel,

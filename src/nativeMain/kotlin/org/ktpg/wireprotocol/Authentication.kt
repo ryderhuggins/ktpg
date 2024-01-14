@@ -13,7 +13,9 @@ import org.ktpg.readString
 
 // TODO: need to flesh this out for e.g. incorrect password
 internal suspend fun startupConnection(pgConn: PgConnection): Result<StartupParameters, StartupFailure> {
-    sendStartupMessage(pgConn.sendChannel, pgConn.user, pgConn.database)
+    val startupMessage = StartupMessage(0x03, pgConn.clientParameters)
+    sendStartupMessage(pgConn.sendChannel, startupMessage)
+
     val res = readAuthenticationResponse(pgConn.receiveChannel)
     when (res) {
         is AuthenticationOk -> println("Authentication succeeded - no password required")
