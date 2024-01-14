@@ -56,8 +56,7 @@ private suspend fun readAuthenticationResponse(receiveChannel: ByteReadChannel):
     }
 
     // read integer to determine message status
-    val authenticationStatus = message.messageBytes.readInt()
-    when (authenticationStatus) {
+    when (val authenticationStatus = message.messageBytes.readInt()) {
         0 -> return AuthenticationOk
         3 -> return CleartextPasswordRequest
         5 -> {
@@ -78,11 +77,9 @@ private suspend fun readAuthenticationResponse(receiveChannel: ByteReadChannel):
 }
 
 private suspend fun performCleartextPasswordAuthentication(pgConn: PgConnection): AuthenticationResponse {
-    val messageType = ByteArray(1)
-    messageType[0] = 'p'.code.toByte()
-    val sizeOf = pgConn.password.length + 1 + 4
-    val cleartextPasswordMessage = messageType + i32ToByteArray(sizeOf) + pgConn.password.toAscii() + 0x0
-    pgConn.sendChannel.writeFully(cleartextPasswordMessage)
+    val cleartextPasswordMessage = CleartextPasswordMessage(pgConn.password)
+    val messageBytes = serialize(cleartextPasswordMessage)
+    pgConn.sendChannel.writeFully(messageBytes)
 
     val authenticationOk = readAuthenticationResponse(pgConn.receiveChannel)
     if (authenticationOk !is AuthenticationOk) {
