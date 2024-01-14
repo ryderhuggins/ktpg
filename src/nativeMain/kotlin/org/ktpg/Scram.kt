@@ -44,7 +44,6 @@ internal fun getStoredKey(clientKey: ByteArray): ByteArray {
 
 internal fun getAuthMessage(clientFirstMessage: String, serverFirstMessage: String, clientFinalMessageWithoutProof: String): ByteArray {
     val x = "$clientFirstMessage,$serverFirstMessage,$clientFinalMessageWithoutProof"
-    println("auth message: $x")
     return x.toByteArray()
 }
 
@@ -61,7 +60,6 @@ internal fun getClientProof(clientKey: ByteArray, clientSignature: ByteArray): B
 internal fun getScramClientFinalMessage(password: String, r: String, s: String, i: Int, clientFirstMessageBare: String, serverFirstMessage: String): String {
     val hmac = HmacSHA256("12345".toByteArray())
     val res = hmac.doFinal("sample message".toByteArray())
-    println("hmac res: ${res.toHexString()}")
 
     // test
 //    val r="fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j"
@@ -69,27 +67,20 @@ internal fun getScramClientFinalMessage(password: String, r: String, s: String, 
 //    val i=4096
 
     val saltedPassword = getSaltedPassword(password.toByteArray(), s.decodeBase64Bytes(), i)
-    println("salted password: ${saltedPassword.toHexString()}")
 
     val clientKey = getClientKey(saltedPassword)
-    println("client key: ${clientKey.toHexString()}")
 
     val storedKey = getStoredKey(clientKey)
-    println("stored key: ${storedKey.toHexString()}")
 
 //    val clientFirstMessageBare = "n=user,r=fyko+d2lbbFgONRv9qkxdawL"
 //    val serverFirstMessage = "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096"
     val clientFinalMessageWithoutProof = "c=biws,r=$r"
 
     val authMessage = getAuthMessage(clientFirstMessageBare, serverFirstMessage, clientFinalMessageWithoutProof)
-    println("auth message: ${authMessage.toHexString()}")
 
     val clientSignature = getClientSignature(storedKey, authMessage)
-    println("client signature: ${clientSignature.toHexString()}")
 
     val clientProof = getClientProof(clientKey, clientSignature)
-    println("client proof: ${clientProof.toHexString()}")
-    println("client proof: ${clientProof.encodeBase64()}")
 
     // TODO: what type should this return?
     return clientFinalMessageWithoutProof + ",p=" + clientProof.encodeBase64()

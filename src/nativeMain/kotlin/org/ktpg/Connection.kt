@@ -6,6 +6,7 @@ import kotlinx.coroutines.IO
 import com.github.michaelbull.result.*
 
 import org.ktpg.*
+import org.ktpg.wireprotocol.*
 
 suspend fun getConnection(host: String, port: Int, user: String, password: String, database: String, optionalParameters: Map<String, String>): Result<PgConnectionStartupParameters, PgConnectionFailure> {
     try {
@@ -37,15 +38,25 @@ suspend fun getConnection(host: String, port: Int, user: String, password: Strin
 }
 
 suspend fun executeSimpleQuery(pgConn: PgConnection, sql: String) {
-    sendSimpleQueryMessage(pgConn, sql)
+    sendSimpleQueryMessage(pgConn.sendChannel, sql)
 }
 
 suspend fun readSimpleQueryResponse(pgConn: PgConnection): Result<List<SimpleQueryResponse>, SimpleQueryError> {
-    return readSimpleQueryResponseMessages(pgConn)
+    return readSimpleQueryResponseMessages(pgConn.receiveChannel)
 }
 
+/**
+ * Planning preparedStatement interface
+ * Need a sealed interface PgTypes { Int, Long, Text, Varchar, etc. }
+ * if prepared statement is "UPDATE EMPLOYEES SET SALARY = ? WHERE ID = ?"
+ * ps.setPgInt("$1", 10000).setPgText("$2", "501").build()
+ * or there could be a buildPortal function that takes a prepared statement and a...
+ *
+ * prepareStatement(sqlString, p1TypeOid, p2TypeOid, p3TypeOid...)
+ */
+
 suspend fun close(pgConn: PgConnection) {
-    sendTerminationMessage(pgConn)
+    sendTerminationMessage(pgConn.sendChannel)
     pgConn.socket.close()
     pgConn.selectorManager.close()
 }
