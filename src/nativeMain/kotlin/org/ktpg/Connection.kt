@@ -4,9 +4,34 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 import com.github.michaelbull.result.*
+import io.ktor.utils.io.*
 
 import org.ktpg.*
 import org.ktpg.wireprotocol.*
+
+sealed interface PgConnectionResult
+
+data class PgConnection internal constructor(
+    val host: String,
+    val port: Int,
+    val user: String,
+    internal val password: String,
+    val database: String,
+    val clientParameters: Map<String, String>,
+    internal val socket: Socket,
+    internal val receiveChannel: ByteReadChannel,
+    internal val sendChannel: ByteWriteChannel,
+    internal val selectorManager: SelectorManager
+) : PgConnectionResult
+
+data class PgConnectionStartupParameters internal constructor(
+    val pgConn: PgConnection,
+    val startupParameters: StartupParameters
+)
+
+data class PgConnectionFailure internal constructor(
+    val errorString: String
+) : PgConnectionResult
 
 suspend fun getConnection(host: String, port: Int, user: String, password: String, database: String, clientParameters: Map<String, String>): Result<PgConnectionStartupParameters, PgConnectionFailure> {
     try {

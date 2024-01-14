@@ -1,5 +1,6 @@
 package org.ktpg.wireprotocol
 
+import PgConnection
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Result
 import io.ktor.utils.io.*
@@ -102,17 +103,14 @@ private suspend fun sendMd5PasswordResponse(pgConn: PgConnection, salt: String) 
 
 private suspend fun performScramSha256Authentication(pgConn: PgConnection): AuthenticationResponse {
     // send SASLInitialResponse message
-    val messageType = ByteArray(1)
-    messageType[0] = 'p'.code.toByte()
     val mechanism = "SCRAM-SHA-256"
     // hard-coded gs2 header for now
     val gs2Header = "n,,"
-    val clientFirstMessageBare = "n=,r=" + getRandomString(24)
-    val clientFirstData = gs2Header + clientFirstMessageBare
-    println("sending client-first data: $clientFirstData")
-    val length = 4 + mechanism.length + 1 + 4 +  clientFirstData.length
-    val saslInitialResponseMessage = messageType + i32ToByteArray(length) + mechanism.toAscii() + 0x0 + i32ToByteArray(clientFirstData.length) + clientFirstData.toAscii()
-    pgConn.sendChannel.writeFully(saslInitialResponseMessage)
+    val clientSalt = getRandomString(24)
+
+    val saslInitialResponse = SaslInitialResponse(gs2Header, mechanism, clientSalt)
+    val saslInitialResponseBytes = serialize(saslInitialResponse)
+    pgConn.sendChannel.writeFully(saslInitialResponseBytes)
     println("Done sending scram-sha-256 initial response")
 
     val saslContinuationMessage = readAuthenticationResponse(pgConn.receiveChannel)
@@ -129,7 +127,7 @@ private suspend fun performScramSha256Authentication(pgConn: PgConnection): Auth
         return AuthenticationFailure(it.message ?: "Null error message from parseServerFirstMessage")
     }
 
-    val clientFinalMessageText = getScramClientFinalMessage(pgConn.password, serverFirstMessage.r, serverFirstMessage.s, serverFirstMessage.i, clientFirstMessageBare, saslContinuationMessage.saslData)
+    val clientFinalMessageText = getScramClientFinalMessage(pgConn.password, serverFirstMessage.r, serverFirstMessage.s, serverFirstMessage.i, saslInitialResponse.clientFirstMessageBare, saslContinuationMessage.saslData)
     val clientFinalMessageSize = 4 + clientFinalMessageText.length
     val clientFinalMessageType = ByteArray(1)
     clientFinalMessageType[0] = 'p'.code.toByte()
