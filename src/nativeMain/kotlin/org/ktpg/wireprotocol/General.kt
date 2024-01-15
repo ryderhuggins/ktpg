@@ -25,9 +25,6 @@ internal suspend fun sendStartupMessage(sendChannel: ByteWriteChannel, startupMe
 }
 
 internal suspend fun readStartupResponse(receiveChannel: ByteReadChannel): Result<StartupParameters, StartupFailure> {
-    // in this scenario, we should just read:
-    // - AuthenticationOk, a list of ParameterStatus, a list of BackendKeyData, and ReadyForQuery
-    // then return the two lists or an error
     val parameterStatusMap = mutableMapOf<String, String>()
     val backendKeyDataMap = mutableMapOf<String, Int>()
 
