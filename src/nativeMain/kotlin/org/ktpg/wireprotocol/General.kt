@@ -5,9 +5,28 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
-import org.ktpg.*
 import org.ktpg.i32ToByteArray
 import org.ktpg.readString
+
+data class PgWireMessage(val messageType: Char, val messageBytes: ByteReadPacket)
+
+data class StartupParameters(val parameterStatusMap: Map<String,String>, val backendKeyDataMap: Map<String,Int>)
+data class StartupFailure(val errorString: String)
+
+enum class MessageType(val value: Char) {
+    BACKEND_KEY_DATA('K'),
+    ERROR_RESPONSE('E'),
+    AUTHENTICATION('R'),
+    PARAMETER_STATUS('S'),
+    READY_FOR_QUERY('Z'),
+    COMMAND_COMPLETE('C'),
+    COPY_IN_RESPONSE('G'),
+    COPY_OUT_RESPONSE('H'),
+    ROW_DESCRIPTION('T'),
+    DATA_ROW('D'),
+    EMPTY_QUERY_RESPONSE('I'),
+    NOTICE_RESPONSE('N')
+}
 
 /**
  * TODO - can this throw any exceptions? I don't see any on GitHub

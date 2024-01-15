@@ -12,6 +12,16 @@ import org.ktpg.i32ToByteArray
 import org.ktpg.parseServerFirstMessage
 import org.ktpg.readString
 
+sealed interface AuthenticationResponse
+data object AuthenticationOk : AuthenticationResponse
+data object CleartextPasswordRequest : AuthenticationResponse
+data class Md5PasswordRequest(val salt: String) : AuthenticationResponse
+data class SaslAuthenticationRequest(val mechanism: String) : AuthenticationResponse
+data class SaslAuthenticationContinue(val saslData: String) : AuthenticationResponse
+data object AuthenticationSASLFinal : AuthenticationResponse
+data class AuthenticationFailure(val errorString: String) : AuthenticationResponse
+// TODO other authentication schemes
+
 // TODO: need to flesh this out for e.g. incorrect password
 internal suspend fun startupConnection(pgConn: PgConnection): Result<StartupParameters, StartupFailure> {
     val startupMessage = StartupMessage(0x03, pgConn.clientParameters)

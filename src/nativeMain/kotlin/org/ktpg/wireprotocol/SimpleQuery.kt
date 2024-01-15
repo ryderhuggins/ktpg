@@ -9,6 +9,24 @@ import org.ktpg.*
 import org.ktpg.i32ToByteArray
 import org.ktpg.readString
 
+data class ColumnDescriptor(val name: String,
+                            val tableOid: Int,
+                            val columnId: Short,
+                            val dataTypeOid: Int,
+                            val dataTypeSize: Short,
+                            val typeModifier: Int,
+                            val formatCode: Short)
+
+data class SimpleQueryResponse(
+    val commandTag: String,
+    val columns: List<ColumnDescriptor>,
+    val dataRows: List<Map<String,String>>,
+    val error: Map<String,String>,
+    val notice: Map<String, String>
+)
+
+data class SimpleQueryError(val errorString: String)
+
 suspend fun sendSimpleQueryMessage(sendChannel: ByteWriteChannel, sql: String) {
     // send string
     val messageType = ByteArray(1)
