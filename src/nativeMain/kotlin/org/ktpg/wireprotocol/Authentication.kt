@@ -127,11 +127,8 @@ private suspend fun performScramSha256Authentication(pgConn: PgConnection): Auth
         return AuthenticationFailure(it.message ?: "Null error message from parseServerFirstMessage")
     }
 
-    val clientFinalMessageText = getScramClientFinalMessage(pgConn.password, serverFirstMessage.r, serverFirstMessage.s, serverFirstMessage.i, saslInitialResponse.clientFirstMessageBare, saslContinuationMessage.saslData)
-    val clientFinalMessageSize = 4 + clientFinalMessageText.length
-    val clientFinalMessageType = ByteArray(1)
-    clientFinalMessageType[0] = 'p'.code.toByte()
-    val finalMessage = clientFinalMessageType + i32ToByteArray(clientFinalMessageSize) + clientFinalMessageText.toAscii()
+    val clientFinalMessage = getScramClientFinalMessage(pgConn.password, serverFirstMessage.r, serverFirstMessage.s, serverFirstMessage.i, saslInitialResponse.clientFirstMessageBare, saslContinuationMessage.saslData)
+    val finalMessage = serialize(clientFinalMessage)
     pgConn.sendChannel.writeFully(finalMessage)
     println("Done sending client final message")
 

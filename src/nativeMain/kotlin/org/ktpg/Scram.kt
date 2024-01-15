@@ -6,6 +6,8 @@ import org.kotlincrypto.hash.sha2.SHA256
 import org.kotlincrypto.macs.hmac.sha2.HmacSHA256
 import kotlin.experimental.xor
 
+import org.ktpg.wireprotocol.ClientFinalMessage
+
 internal fun xorByteArrays(b1: ByteArray, b2: ByteArray): ByteArray {
     val res = ByteArray(b1.size)
     for (i in b1.indices) {
@@ -56,24 +58,13 @@ internal fun getClientProof(clientKey: ByteArray, clientSignature: ByteArray): B
 }
 
 // TODO: unit test this
-@OptIn(ExperimentalStdlibApi::class)
-internal fun getScramClientFinalMessage(password: String, r: String, s: String, i: Int, clientFirstMessageBare: String, serverFirstMessage: String): String {
-    val hmac = HmacSHA256("12345".toByteArray())
-    val res = hmac.doFinal("sample message".toByteArray())
-
-    // test
-//    val r="fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j"
-//    val s="QSXCR+Q6sek8bf92".decodeBase64Bytes()
-//    val i=4096
-
+internal fun getScramClientFinalMessage(password: String, r: String, s: String, i: Int, clientFirstMessageBare: String, serverFirstMessage: String): ClientFinalMessage {
     val saltedPassword = getSaltedPassword(password.toByteArray(), s.decodeBase64Bytes(), i)
 
     val clientKey = getClientKey(saltedPassword)
 
     val storedKey = getStoredKey(clientKey)
 
-//    val clientFirstMessageBare = "n=user,r=fyko+d2lbbFgONRv9qkxdawL"
-//    val serverFirstMessage = "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096"
     val clientFinalMessageWithoutProof = "c=biws,r=$r"
 
     val authMessage = getAuthMessage(clientFirstMessageBare, serverFirstMessage, clientFinalMessageWithoutProof)
@@ -82,13 +73,10 @@ internal fun getScramClientFinalMessage(password: String, r: String, s: String, 
 
     val clientProof = getClientProof(clientKey, clientSignature)
 
-    // TODO: what type should this return?
-    return clientFinalMessageWithoutProof + ",p=" + clientProof.encodeBase64()
+    return ClientFinalMessage(clientFinalMessageWithoutProof, clientProof.encodeBase64())
 }
 
 internal data class ScramServerFirstMessage(val r: String, val s: String, val i: Int)
-
-data class ClientFinalMessage(val clientFinalMessageBare: String, val clientProof: String)
 
 // TODO unit test this
 internal fun parseServerFirstMessage(serverFirstMessageText: String): Result<ScramServerFirstMessage> {
