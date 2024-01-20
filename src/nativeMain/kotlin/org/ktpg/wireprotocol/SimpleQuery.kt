@@ -27,7 +27,7 @@ data class SimpleQueryResponse(
 
 data class SimpleQueryError(val errorString: String)
 
-suspend fun sendSimpleQueryMessage(sendChannel: ByteWriteChannel, sql: String) {
+internal suspend fun sendSimpleQueryMessage(sendChannel: ByteWriteChannel, sql: String) {
     // send string
     val messageType = ByteArray(1)
     messageType[0] = 'Q'.code.toByte()

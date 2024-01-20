@@ -9,6 +9,15 @@ import io.ktor.utils.io.*
 import org.ktpg.*
 import org.ktpg.wireprotocol.*
 
+/**
+ * TODO - for now i'm just putting exposed data structures here (i.e. supposed to be used by clients)
+ */
+data class PreparedStatement(
+    val name: String? = null,
+    val sql: String,
+    val types: List<PgTypes>? = null
+)
+
 sealed interface PgConnectionResult
 
 data class PgConnection internal constructor(
@@ -71,6 +80,29 @@ suspend fun executeSimpleQuery(pgConn: PgConnection, sql: String) {
 
 suspend fun readSimpleQueryResponse(pgConn: PgConnection): Result<List<SimpleQueryResponse>, SimpleQueryError> {
     return readSimpleQueryResponseMessages(pgConn.receiveChannel)
+}
+
+suspend fun prepareStatement(pgConn: PgConnection, preparedStatement: PreparedStatement) {
+    val parseMessage = ParseMessage(
+        preparedStatement.name ?: "",
+        preparedStatement.sql,
+        preparedStatement.types ?: emptyList()
+    )
+    println("parseMessage: $parseMessage")
+
+    val parseMessageBytes = serialize(parseMessage)
+    println("writing ${parseMessageBytes.size} bytes")
+    pgConn.sendChannel.writeFully(parseMessageBytes)
+}
+
+suspend fun sendSyncMessage(pgConn: PgConnection) {
+    val bytes = serialize(SyncMessage)
+    pgConn.sendChannel.writeFully(bytes)
+}
+
+suspend fun sendFlushMessage(pgConn: PgConnection) {
+    val bytes = serialize(FlushMessage)
+    pgConn.sendChannel.writeFully(bytes)
 }
 
 /**

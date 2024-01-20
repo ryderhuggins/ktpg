@@ -9,6 +9,8 @@ internal fun i32ToByteArray(n: Int): ByteArray =
         (n shr (it * Byte.SIZE_BITS)).toByte()
     }.toByteArray()
 
+internal fun Short.toByteArray(): ByteArray =  byteArrayOf(((this.toInt() and 0xFF00) shr (8)).toByte(), (this.toInt() and 0x00FF).toByte())
+
 fun getRandomString(length: Int) : String {
     val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
     return (1..length)
