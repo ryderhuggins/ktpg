@@ -5,6 +5,7 @@ import kotlinx.coroutines.IO
 
 import com.github.michaelbull.result.*
 import io.ktor.utils.io.*
+import io.ktor.utils.io.core.*
 
 import org.ktpg.*
 import org.ktpg.wireprotocol.*
@@ -17,6 +18,12 @@ data class PreparedStatement(
     val sql: String,
     val types: List<PgTypes>? = null
 )
+
+typealias ErrorResponse = Map<String,String>
+typealias ExecuteResponse = List<List<String>>
+
+class PreparedStatementSuccess
+class BindStatementSuccess
 
 sealed interface PgConnectionResult
 
@@ -93,6 +100,57 @@ suspend fun prepareStatement(pgConn: PgConnection, preparedStatement: PreparedSt
     val parseMessageBytes = serialize(parseMessage)
     println("writing ${parseMessageBytes.size} bytes")
     pgConn.sendChannel.writeFully(parseMessageBytes)
+}
+
+suspend fun bind(pgConn: PgConnection, statementName: String? = null, portalName: String? = null, parameterValues: List<ParameterValue>) {
+    val parameterFormats = List(parameterValues.size, { ParameterFormat.TEXT })
+    val bindMessage = BindMessage(portalName ?: "", statementName ?: "", parameterFormats, parameterValues)
+    val bytes = serialize(bindMessage)
+    pgConn.sendChannel.writeFully(bytes)
+}
+
+suspend fun execute(pgConn: PgConnection, portalName: String? = null): ExecuteResponse {
+    val executeMessage = ExecuteMessage(portalName ?: "")
+    val bytes = serialize(executeMessage)
+    pgConn.sendChannel.writeFully(bytes)
+    sendSyncMessage(pgConn)
+
+    // just read until Z
+    return readExecuteResponse(pgConn)
+}
+
+suspend fun readExecuteResponse(pgConn: PgConnection): ExecuteResponse {
+    var message: PgWireMessage
+    var dataRows = mutableListOf<List<String>>()
+
+    // just putting a bound on this for sanity's sake
+    for (i in 0..99) {
+        message = readMessage(pgConn.receiveChannel)
+        when(message.messageType) {
+            MessageType.ERROR_RESPONSE.value -> println("Got ErrorResponse message from server")
+            MessageType.PARSE_COMPLETE.value -> println("Parse complete")
+            MessageType.BIND_COMPLETE.value -> println("Bind complete")
+            MessageType.READY_FOR_QUERY.value -> { println("Ready for query"); return dataRows; }
+            MessageType.DATA_ROW.value -> {
+                val columnCount = message.messageBytes.readShort()
+                val dataRow = mutableListOf<String>()
+
+                fields@ for (i in 0..<columnCount) {
+                    val fieldLength = message.messageBytes.readInt()
+                    if (fieldLength == -1) {
+                        println("Field length -1. adding empty string to result list")
+                        dataRow.add("")
+                        continue@fields
+                    }
+                    val columnValue = readString(message.messageBytes, fieldLength)
+                    dataRow.add(columnValue)
+                }
+                dataRows.add(dataRow)
+            }
+        }
+    }
+    println("Exhausted loop count while reading execution response")
+    return emptyList()
 }
 
 suspend fun sendSyncMessage(pgConn: PgConnection) {

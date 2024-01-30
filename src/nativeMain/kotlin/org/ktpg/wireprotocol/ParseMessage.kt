@@ -17,7 +17,7 @@ internal fun serialize(parseMessage: ParseMessage): ByteArray {
     messageType[0] = 'P'.code.toByte()
     
     val serializedName = if(parseMessage.name.isEmpty()) {
-        byteArrayOf(0x0) // TODO: should this be two 0x0's or one? 
+        byteArrayOf(0x0)
     } else {
         parseMessage.name.toByteArray() + 0x0
     }

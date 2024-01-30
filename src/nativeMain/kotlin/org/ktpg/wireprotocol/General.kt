@@ -25,7 +25,9 @@ enum class MessageType(val value: Char) {
     ROW_DESCRIPTION('T'),
     DATA_ROW('D'),
     EMPTY_QUERY_RESPONSE('I'),
-    NOTICE_RESPONSE('N')
+    NOTICE_RESPONSE('N'),
+    PARSE_COMPLETE('1'),
+    BIND_COMPLETE('2')
 }
 
 /**

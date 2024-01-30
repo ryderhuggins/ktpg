@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.ktpg.wireprotocol.ParameterValue
 import org.ktpg.wireprotocol.PgTypes
 
 //fun normalize(s: String): ByteArray = TODO()
@@ -21,26 +22,31 @@ fun main() {
 //            simpleQueryStuff(pgConn)
 
 
-            val p1 = PreparedStatement(
-                null,
-                "select table_name, table_type from information_schema.tables where table_name = $1 and table_type = $2",
-                null
-            )
-            prepareStatement(pgConn, p1)
+//            val p1 = PreparedStatement(
+//                null,
+//                "select table_name, table_type from information_schema.tables where table_name = $1 and table_type = $2",
+//                null
+//            )
+//            val p1Response = prepareStatement(pgConn, p1)
 
             val p2 = PreparedStatement(
                 "named_statement",
-                "select table_name, table_type from information_schema.tables where table_name = $1 and table_type = $2",
+                "select * from information_schema.tables where table_name = $1",
                 null
             )
             prepareStatement(pgConn, p2)
 
-            val p3 = PreparedStatement(
-                "named_statement2",
-                "select table_name, table_type from information_schema.tables where table_name = $1 and table_type = $2",
-                listOf(PgTypes.VARCHAR, PgTypes.VARCHAR)
-            )
-            prepareStatement(pgConn, p3)
+            bind(pgConn, statementName="named_statement", parameterValues=listOf(ParameterValue.Text("pg_class")))
+
+            val res = execute(pgConn)
+            println("result from p2 exeuction: $res")
+
+//            val p3 = PreparedStatement(
+//                "named_statement2",
+//                "select table_name, table_type from information_schema.tables where table_name = $1 and table_type = $2",
+//                listOf(PgTypes.VARCHAR, PgTypes.VARCHAR)
+//            )
+//            prepareStatement(pgConn, p3)
 
             close(pgConn)
         }
