@@ -5,6 +5,7 @@ TODO before sharing:
 - an example application using prepared statements and parsing the result
 - Parse configuration from environment variables
 - Change print statements to proper logging
+- add a few more data types for prepared statement binding? 
 
 New Features TODO
 - Create a Connect function that just takes a connection string
