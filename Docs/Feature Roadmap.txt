@@ -1,30 +1,26 @@
 
-Current gameplan is to get "simple" query feature working, then go back and do cleanup, unit testing, and API surface area design
+TODO before sharing:
+- unit tests
+- integration test structure
+- an example application using prepared statements and parsing the result
+- Parse configuration from environment variables
+- Change print statements to proper logging
 
 New Features TODO
-- NEXT: EXTENDED QUERY
-- Change print statements to proper logging
+- Create a Connect function that just takes a connection string
 - SSL/TLS (& channel binding for SASL/SCRAM)
 - Proper native/KMP build setup - check here - https://dev.to/kotlin/how-to-build-and-publish-a-kotlin-multiplatform-library-creating-your-first-library-1bp8
 
 Test TODOs
 - calling a method on a closed connection
+- incorrect password in startup flow
+- what happens to connection if connection is terminated (e.g. database server dies)?
 
 Refactoring/Improvements/Investments/Tech Debt
-0. Refactor to DOP
 1. Refactor sendStartupMessagePassword to enable an API that could create an interactive terminal application (e.g. readAuthResponse)
 2. SCRAM subsystem
-    - refactor/cleanup and add in some tests
-    - better (more secure?) random number generation for SCRAM clientFirstMessage
+    - better (more secure) random number generation for SCRAM clientFirstMessage
     - better understanding of gs2
-    - read list of SCRAM mechanisms from server - it currently only reads one
+    - !! read list of SCRAM mechanisms from server - it currently only reads one!!
 3. Send simple query
     - Accommodate this: In simple Query mode, the format of retrieved values is always text, except when the given command is a FETCH from a cursor
-
-Done
-- Send simple query
-    - proper ErrorResponse & NoticeResponse messages
-    - handle return values from multiple statements in a simple query
-- Send cleartext password response
-- SCRAM:
-    - SCRAM-SHA-256 authentication
