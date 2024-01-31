@@ -27,12 +27,18 @@ data class SimpleQueryResponse(
 
 data class SimpleQueryError(val errorString: String)
 
-internal suspend fun sendSimpleQueryMessage(sendChannel: ByteWriteChannel, sql: String) {
-    // send string
+typealias SimpleQuery = String
+
+internal fun serialize(simpleQuery: SimpleQuery): ByteArray {
     val messageType = ByteArray(1)
     messageType[0] = 'Q'.code.toByte()
-    val queryMessage = messageType + i32ToByteArray(4 + sql.length + 1) + sql.toAscii() + 0x0
-    sendChannel.writeFully(queryMessage)
+    return messageType + i32ToByteArray(4 + simpleQuery.length + 1) + simpleQuery.toAscii() + 0x0
+}
+
+internal suspend fun sendSimpleQueryMessage(sendChannel: ByteWriteChannel, sql: SimpleQuery) {
+    // send string
+    val messageBytes = serialize(sql)
+    sendChannel.writeFully(messageBytes)
 }
 
 internal suspend fun readSimpleQueryResponseMessages(receiveChannel: ByteReadChannel): Result<List<SimpleQueryResponse>, SimpleQueryError> {

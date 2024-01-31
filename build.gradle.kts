@@ -42,6 +42,10 @@ kotlin {
                 implementation("com.michael-bull.kotlin-result:kotlin-result:1.1.18")
             }
         }
-        val nativeTest by getting
+        val nativeTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
     }
 }
