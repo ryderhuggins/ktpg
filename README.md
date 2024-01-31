@@ -43,3 +43,8 @@ Build and run the client app:
 ```shell
 ./gradlew runReleaseExecutableNative
 ```
+
+Run unit tests:
+```shell
+./gradlew nativeTest
+```
