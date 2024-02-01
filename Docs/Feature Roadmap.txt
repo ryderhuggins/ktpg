@@ -1,6 +1,5 @@
 
 TODO before sharing:
-- unit tests
 - integration test structure
 - an example application using prepared statements and parsing the result
 - Change print statements to proper logging
@@ -13,6 +12,8 @@ Biggest missing features IMO
 - proper integration test setup
 
 Other TODOs
+- add more data types for prepared statement binding
+- more unit tests
 - Create a Connect function that just takes a connection string
 - Parse configuration from environment variables
 - Proper native/KMP build setup - check here - https://dev.to/kotlin/how-to-build-and-publish-a-kotlin-multiplatform-library-creating-your-first-library-1bp8
