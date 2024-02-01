@@ -1,22 +1,18 @@
 
-TODO before sharing:
-- integration test structure
-- an example application using prepared statements and parsing the result
-- Change print statements to proper logging
-- add a few more data types for prepared statement binding? 
-
 Biggest missing features IMO
 - SSL/TLS (& channel binding for SASL/SCRAM)
 - more data types to be serialized in bind(...) calls
 - handle binary format in response from server
 - proper integration test setup
+- more unit tests
+- remaining client commands: CancelRequest, Close, Describe, FunctionCall, among others
 
 Other TODOs
-- add more data types for prepared statement binding
-- more unit tests
+- add more data types for prepared statement binding -> it can only do strings and ints now
+- Change print statements to proper logging
 - Create a Connect function that just takes a connection string
 - Parse configuration from environment variables
-- Proper native/KMP build setup - check here - https://dev.to/kotlin/how-to-build-and-publish-a-kotlin-multiplatform-library-creating-your-first-library-1bp8
+- Proper native/KMP build setup -> hardcoded for my intel mac setup right now
 - SCRAM stuff
     - better (more secure) random number generation for SCRAM clientFirstMessage
     - better understanding of gs2
