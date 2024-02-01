@@ -18,14 +18,6 @@ fun main() {
         launch(Dispatchers.IO) {
 //            simpleQueryStuff(pgConn)
 
-
-//            val p1 = PreparedStatement(
-//                null,
-//                "select table_name, table_type from information_schema.tables where table_name = $1 and table_type = $2",
-//                null
-//            )
-//            val p1Response = prepareStatement(pgConn, p1)
-
             val p2 = PreparedStatement(
                 "named_statement",
                 "select * from information_schema.tables where table_name = $1",
