@@ -7,9 +7,6 @@ import kotlinx.coroutines.runBlocking
 import org.ktpg.wireprotocol.ParameterValue
 import org.ktpg.wireprotocol.PgTypes
 
-//fun normalize(s: String): ByteArray = TODO()
-
-
 fun main() {
     runBlocking {
         // change username to ryderhuggins for no password, secure1 for cleartext password, secure2 for SCRAM-SHA-256
@@ -46,8 +43,11 @@ fun main() {
                 "select table_name, table_type from information_schema.tables where table_name = $1 and table_type = $2",
                 listOf(PgTypes.VARCHAR, PgTypes.VARCHAR)
             )
-            bind(pgConn, statementName="", parameterValues=listOf(ParameterValue.Text("pg_class"), ParameterValue.Text("hello")))
             prepareStatement(pgConn, p3)
+
+            bind(pgConn, statementName="", parameterValues=listOf(ParameterValue.Text("pg_class"), ParameterValue.Text("hello")))
+
+            val res2 = execute(pgConn)
 
             close(pgConn)
         }

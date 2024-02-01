@@ -1,5 +1,5 @@
 # ktpg
-a Kotlin/Native implementation of the postgres wire protocol
+a (work-in-progress) Kotlin/Native postgres client
 
 ## Goals
 - Implement a postgres client in K/N 
