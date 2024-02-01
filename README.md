@@ -1,5 +1,5 @@
 # ktpg
-a (work-in-progress) Kotlin/Native postgres client
+The humble beginnings of a Kotlin/Native postgres client
 
 ## Goals
 - Implement a postgres client in K/N 
