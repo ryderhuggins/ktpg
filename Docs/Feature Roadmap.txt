@@ -10,6 +10,7 @@ Biggest missing features IMO
 - SSL/TLS (& channel binding for SASL/SCRAM)
 - more data types to be serialized in bind(...) calls
 - handle binary format in response from server
+- proper integration test setup
 
 Other TODOs
 - Create a Connect function that just takes a connection string

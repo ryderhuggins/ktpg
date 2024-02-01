@@ -41,12 +41,13 @@ fun main() {
             val res = execute(pgConn)
             println("result from p2 exeuction: $res")
 
-//            val p3 = PreparedStatement(
-//                "named_statement2",
-//                "select table_name, table_type from information_schema.tables where table_name = $1 and table_type = $2",
-//                listOf(PgTypes.VARCHAR, PgTypes.VARCHAR)
-//            )
-//            prepareStatement(pgConn, p3)
+            val p3 = PreparedStatement(
+                "",
+                "select table_name, table_type from information_schema.tables where table_name = $1 and table_type = $2",
+                listOf(PgTypes.VARCHAR, PgTypes.VARCHAR)
+            )
+            bind(pgConn, statementName="", parameterValues=listOf(ParameterValue.Text("pg_class"), ParameterValue.Text("hello")))
+            prepareStatement(pgConn, p3)
 
             close(pgConn)
         }
