@@ -3,25 +3,25 @@ TODO before sharing:
 - unit tests
 - integration test structure
 - an example application using prepared statements and parsing the result
-- Parse configuration from environment variables
 - Change print statements to proper logging
 - add a few more data types for prepared statement binding? 
 
-New Features TODO
-- Create a Connect function that just takes a connection string
+Biggest missing features IMO
 - SSL/TLS (& channel binding for SASL/SCRAM)
+- more data types to be serialized in bind(...) calls
+- handle binary format in response from server
+
+Other TODOs
+- Create a Connect function that just takes a connection string
+- Parse configuration from environment variables
 - Proper native/KMP build setup - check here - https://dev.to/kotlin/how-to-build-and-publish-a-kotlin-multiplatform-library-creating-your-first-library-1bp8
+- SCRAM stuff
+    - better (more secure) random number generation for SCRAM clientFirstMessage
+    - better understanding of gs2
+    - !! read list of SCRAM mechanisms from server - it currently only reads one!!
+- Refactor sendStartupMessagePassword to enable an API that could create an interactive terminal application (e.g. readAuthResponse)
 
 Test TODOs
 - calling a method on a closed connection
 - incorrect password in startup flow
 - what happens to connection if connection is terminated (e.g. database server dies)?
-
-Refactoring/Improvements/Investments/Tech Debt
-1. Refactor sendStartupMessagePassword to enable an API that could create an interactive terminal application (e.g. readAuthResponse)
-2. SCRAM subsystem
-    - better (more secure) random number generation for SCRAM clientFirstMessage
-    - better understanding of gs2
-    - !! read list of SCRAM mechanisms from server - it currently only reads one!!
-3. Send simple query
-    - Accommodate this: In simple Query mode, the format of retrieved values is always text, except when the given command is a FETCH from a cursor
