@@ -32,6 +32,5 @@ internal fun serialize(parseMessage: ParseMessage): ByteArray {
     
     val size = 4 + serializedName.size + parseMessage.query.length + 1 + 2 + parseMessage.typeOids.size*4
     
-    println("num parameters byte array = ${parseMessage.typeOids.size.toShort().toByteArray()[0]}, ${parseMessage.typeOids.size.toShort().toByteArray()[1]}")
     return messageType + i32ToByteArray(size) + serializedName + parseMessage.query.toAscii() + 0x0 + parseMessage.typeOids.size.toShort().toByteArray() + serializedTypes
 }

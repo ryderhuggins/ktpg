@@ -15,7 +15,7 @@ fun main() {
 
         launch(Dispatchers.IO) {
             simpleQueryStuff(pgConn)
-//            preparedStatementStuff(pgConn)
+            preparedStatementStuff(pgConn)
             close(pgConn)
         }
 
@@ -23,24 +23,21 @@ fun main() {
 }
 
 private suspend fun preparedStatementStuff(pgConn: PgConnection) {
-    val p2 = PreparedStatement(
+    pgConn.prepareStatement(
         "named_statement",
         "select * from information_schema.tables where table_name = $1",
         null
     )
-    pgConn.prepareStatement(p2)
 
     pgConn.bind(statementName = "named_statement", parameterValues = listOf(ParameterValue.Text("pg_class")))
 
-    val res = pgConn.execute()
-    println("result from p2 exeuction: $res")
+    pgConn.execute()
 
-    val p3 = PreparedStatement(
+    pgConn.prepareStatement(
         "",
         "select table_name, table_type from information_schema.tables where table_name = $1 and table_type = $2",
         listOf(PgTypes.VARCHAR, PgTypes.VARCHAR)
     )
-    pgConn.prepareStatement(p3)
 
     pgConn.bind(
         statementName = "",

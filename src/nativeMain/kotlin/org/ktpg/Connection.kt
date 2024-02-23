@@ -13,12 +13,6 @@ import org.ktpg.wireprotocol.*
 /**
  * TODO - for now i'm just putting exposed data structures here (i.e. supposed to be used by clients)
  */
-data class PreparedStatement(
-    val name: String? = null,
-    val sql: String,
-    val types: List<PgTypes>? = null
-)
-
 typealias ErrorResponse = Map<String,String>
 typealias ExecuteResponse = List<List<String>>
 
@@ -89,16 +83,14 @@ suspend fun PgConnection.readSimpleQueryResponse(): Result<List<SimpleQueryRespo
     return readSimpleQueryResponseMessages(this.receiveChannel)
 }
 
-suspend fun PgConnection.prepareStatement(preparedStatement: PreparedStatement) {
+suspend fun PgConnection.prepareStatement(name: String? = null, sql: String, types: List<PgTypes>? = null) {
     val parseMessage = ParseMessage(
-        preparedStatement.name ?: "",
-        preparedStatement.sql,
-        preparedStatement.types ?: emptyList()
+        name ?: "",
+        sql,
+        types ?: emptyList()
     )
-    println("parseMessage: $parseMessage")
 
     val parseMessageBytes = serialize(parseMessage)
-    println("writing ${parseMessageBytes.size} bytes")
     this.sendChannel.writeFully(parseMessageBytes)
 }
 
@@ -138,7 +130,7 @@ suspend fun PgConnection.readExecuteResponse(): ExecuteResponse {
                 fields@ for (i in 0..<columnCount) {
                     val fieldLength = message.messageBytes.readInt()
                     if (fieldLength == -1) {
-                        println("Field length -1. adding empty string to result list")
+//                        println("Field length -1. adding empty string to result list")
                         dataRow.add("")
                         continue@fields
                     }
