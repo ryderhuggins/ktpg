@@ -49,6 +49,21 @@ private suspend fun preparedStatementStuff(pgConn: PgConnection) {
     if (pgConn.execute().size != 1) {
         println("FAILED TEST: select * from flights where flight_id = \$1;")
     }
+
+    pgConn.prepareStatement(
+        "",
+        "select * from bookings where book_date > $1;",
+        listOf(PgTypes.TIMESTAMPZ)
+    )
+
+    pgConn.bind(
+        statementName = "",
+        parameterValues = listOf(ParameterValue.TimestampZ("2017-08-15 10:50"))
+    )
+
+    if (pgConn.execute().size != 54) {
+        println("FAILED TEST: select * from bookings where book_date > \$1;")
+    }
 }
 
 suspend fun simpleQueryStuff(pgConn: PgConnection) {

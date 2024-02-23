@@ -14,6 +14,7 @@ sealed interface ParameterValue {
     data class Integer(val integer: Int) : ParameterValue
     data class SmallInt(val smallInt: Short) : ParameterValue
     data class VarChar(val varChar: String) : ParameterValue
+    data class TimestampZ(val timestampZ: String) : ParameterValue
 }
 
 // TODO - THIS ONLY SERIALIZES TO TEXT
@@ -21,6 +22,7 @@ internal fun serializeParameterValue(parameterValue: ParameterValue): ByteArray 
     return when (parameterValue) {
         is ParameterValue.Text -> i32ToByteArray(parameterValue.text.length) + parameterValue.text.toByteArray()
         is ParameterValue.Integer -> i32ToByteArray(parameterValue.integer.toString().length) + parameterValue.integer.toString().toByteArray()
+        is ParameterValue.TimestampZ -> i32ToByteArray(parameterValue.timestampZ.length) + parameterValue.timestampZ.toByteArray()
         else -> byteArrayOf()
     }
 }
