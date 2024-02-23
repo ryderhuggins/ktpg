@@ -1,5 +1,4 @@
 import com.github.michaelbull.result.*
-import org.ktpg.getRandomString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -13,7 +12,6 @@ fun main() {
         val (pgConn, _) = getConnection("127.0.0.1", 5432, "secure2", "password123", "demo", emptyMap()).getOrThrow {
             Throwable(it.errorString)
         }
-        println("Connection created")
 
         launch(Dispatchers.IO) {
             simpleQueryStuff(pgConn)
@@ -55,18 +53,15 @@ private suspend fun preparedStatementStuff(pgConn: PgConnection) {
 suspend fun simpleQueryStuff(pgConn: PgConnection) {
     pgConn.executeSimpleQuery("INSERT INTO bookings (book_ref, book_date, total_amount)\nVALUES('222223', '2024-07-04 20:12:00-04', 12.12);")
     pgConn.readSimpleQueryResponse()
-        .onFailure { println("** FAILED ** to run first query: $it") }
-        .onSuccess { println("Simple query response: $it") }
+        .onFailure { println("** FAILED ** test with error: $it") }
 
     pgConn.executeSimpleQuery("DELETE FROM bookings where book_ref = '222223';")
     pgConn.readSimpleQueryResponse()
-        .onFailure { println("** FAILED ** to run first query: $it") }
-        .onSuccess { println("Simple query response: $it") }
+        .onFailure { println("** FAILED ** test with error: $it") }
 
-//    pgConn.executeSimpleQuery("select * from book_ref;")
-//    pgConn.readSimpleQueryResponse()
-//        .onFailure { println("** FAILED **: $it") }
-//        .onSuccess { println("Simple query response: $it") }
+    pgConn.executeSimpleQuery("select * from book_ref limit 100;")
+    pgConn.readSimpleQueryResponse()
+        .onFailure { println("** FAILED ** test with error: $it") }
 //
 //    pgConn.executeSimpleQuery("select fro links;")
 //    pgConn.readSimpleQueryResponse()

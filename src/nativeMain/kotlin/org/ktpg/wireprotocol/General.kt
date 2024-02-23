@@ -70,7 +70,7 @@ internal suspend fun readStartupResponse(receiveChannel: ByteReadChannel): Resul
 //                println("Got BackendKeydata message from server")
                 val backendProcessId = message.messageBytes.readInt()
                 val backendSecretKey = message.messageBytes.readInt()
-                println("backendProcessId=$backendProcessId, backendSecretKey=$backendSecretKey")
+//                println("backendProcessId=$backendProcessId, backendSecretKey=$backendSecretKey")
                 backendKeyDataMap["backendProcessId"] = backendProcessId
                 backendKeyDataMap["backendSecretKey"] = backendSecretKey
             }

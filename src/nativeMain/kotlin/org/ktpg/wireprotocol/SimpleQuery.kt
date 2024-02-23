@@ -104,7 +104,7 @@ internal suspend fun readSimpleQueryResponseMessages(receiveChannel: ByteReadCha
             }
             MessageType.ERROR_RESPONSE.value -> {
                 val err = parseErrorOrNoticeResponseMessage(message.messageBytes)
-                println("Received error message from server: $err")
+//                println("Received error message from server: $err")
                 result.add(SimpleQueryResponse(commandTag, columns, dataRows, err, notices))
                 commandTag = ""
                 columns = mutableListOf<ColumnDescriptor>()
@@ -113,11 +113,11 @@ internal suspend fun readSimpleQueryResponseMessages(receiveChannel: ByteReadCha
             }
             MessageType.NOTICE_RESPONSE.value -> {
                 notices = parseErrorOrNoticeResponseMessage(message.messageBytes)
-                println("Received notice message from server: $notices")
+//                println("Received notice message from server: $notices")
             }
             MessageType.READY_FOR_QUERY.value -> {
                 val status = message.messageBytes.readByte().toInt().toChar()
-                println("Received Ready For Query with status: $status")
+//                println("Received Ready For Query with status: $status")
                 return Ok(result)
             }
         }

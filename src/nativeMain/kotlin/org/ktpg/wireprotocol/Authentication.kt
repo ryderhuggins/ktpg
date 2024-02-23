@@ -31,18 +31,18 @@ internal suspend fun startupConnection(pgConn: PgConnection): Result<StartupPara
     when (res) {
         is AuthenticationOk -> println("Authentication succeeded - no password required")
         is CleartextPasswordRequest -> {
-            println("Password requested from server")
+//            println("Password requested from server")
             val authResponse = performCleartextPasswordAuthentication(pgConn)
             if (authResponse !is AuthenticationOk) {
                 return Err(StartupFailure("$res"))
             }
         }
         is Md5PasswordRequest -> {
-            println("MD5 password requested from server with salt = ${res.salt}")
+//            println("MD5 password requested from server with salt = ${res.salt}")
             sendMd5PasswordResponse(pgConn, res.salt)
         }
         is SaslAuthenticationRequest -> {
-            println("SASL authentication requested from server with mechanism - ${res.mechanism}")
+//            println("SASL authentication requested from server with mechanism - ${res.mechanism}")
             // TODO: mechanism is actually a list of mechanisms
             if (res.mechanism != "SCRAM-SHA-256") {
                 println("Error: Unsupported mechanism received from server - ${res.mechanism}")
