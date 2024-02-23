@@ -121,7 +121,7 @@ private suspend fun performScramSha256Authentication(pgConn: PgConnection): Auth
     val saslInitialResponse = SaslInitialResponse(gs2Header, mechanism, clientSalt)
     val saslInitialResponseBytes = serialize(saslInitialResponse)
     pgConn.sendChannel.writeFully(saslInitialResponseBytes)
-    println("Done sending scram-sha-256 initial response")
+//    println("Done sending scram-sha-256 initial response")
 
     val saslContinuationMessage = readAuthenticationResponse(pgConn.receiveChannel)
     if (saslContinuationMessage !is SaslAuthenticationContinue) {
@@ -129,7 +129,7 @@ private suspend fun performScramSha256Authentication(pgConn: PgConnection): Auth
         return AuthenticationFailure("Unexpected message type in SCRAM-SHA-256 authentication process. Message type: $saslContinuationMessage")
     }
 
-    println("sasl continuation data: ${saslContinuationMessage.saslData}")
+//    println("sasl continuation data: ${saslContinuationMessage.saslData}")
     // TODO: here we need to check that the first part of the 'r' value is equal to the clientFirstData random string
     // s is the base64-encoded salt
     // i is the iteration count
@@ -140,7 +140,7 @@ private suspend fun performScramSha256Authentication(pgConn: PgConnection): Auth
     val clientFinalMessage = getScramClientFinalMessage(pgConn.password, serverFirstMessage.r, serverFirstMessage.s, serverFirstMessage.i, saslInitialResponse.clientFirstMessageBare, saslContinuationMessage.saslData)
     val finalMessage = serialize(clientFinalMessage)
     pgConn.sendChannel.writeFully(finalMessage)
-    println("Done sending client final message")
+//    println("Done sending client final message")
 
     val saslFinalResponse = readAuthenticationResponse(pgConn.receiveChannel)
     if (saslFinalResponse !is AuthenticationSASLFinal) {

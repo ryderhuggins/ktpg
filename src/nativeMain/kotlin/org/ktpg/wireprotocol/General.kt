@@ -56,18 +56,18 @@ internal suspend fun readStartupResponse(receiveChannel: ByteReadChannel): Resul
     while (i++ < 200) {
         when(message.messageType) {
             MessageType.ERROR_RESPONSE.value -> {
-                println("Got ErrorResponse message from server")
+//                println("Got ErrorResponse message from server")
                 return Err(StartupFailure("Got ErrorResponse message from server"))
             }
             MessageType.PARAMETER_STATUS.value -> {
-                println("Got ParameterStatus message from server")
+//                println("Got ParameterStatus message from server")
                 val parameterName = readString(message.messageBytes)
                 val parameterValue = readString(message.messageBytes)
                 parameterStatusMap[parameterName] = parameterValue
-                println("Got Parameter $parameterName - $parameterValue")
+//                println("Got Parameter $parameterName - $parameterValue")
             }
             MessageType.BACKEND_KEY_DATA.value -> {
-                println("Got BackendKeydata message from server")
+//                println("Got BackendKeydata message from server")
                 val backendProcessId = message.messageBytes.readInt()
                 val backendSecretKey = message.messageBytes.readInt()
                 println("backendProcessId=$backendProcessId, backendSecretKey=$backendSecretKey")
@@ -75,7 +75,7 @@ internal suspend fun readStartupResponse(receiveChannel: ByteReadChannel): Resul
                 backendKeyDataMap["backendSecretKey"] = backendSecretKey
             }
             MessageType.READY_FOR_QUERY.value -> {
-                println("Got ReadyForQuery message from server")
+//                println("Got ReadyForQuery message from server")
                 // we're done... return the parameters
                 return Ok(StartupParameters(parameterStatusMap, backendKeyDataMap))
             }

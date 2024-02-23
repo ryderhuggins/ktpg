@@ -81,15 +81,15 @@ suspend fun getConnection(host: String, port: Int, user: String, password: Strin
     }
 }
 
-suspend fun executeSimpleQuery(pgConn: PgConnection, sql: String) {
-    sendSimpleQueryMessage(pgConn.sendChannel, sql)
+suspend fun PgConnection.executeSimpleQuery(sql: String) {
+    sendSimpleQueryMessage(this.sendChannel, sql)
 }
 
-suspend fun readSimpleQueryResponse(pgConn: PgConnection): Result<List<SimpleQueryResponse>, SimpleQueryError> {
-    return readSimpleQueryResponseMessages(pgConn.receiveChannel)
+suspend fun PgConnection.readSimpleQueryResponse(): Result<List<SimpleQueryResponse>, SimpleQueryError> {
+    return readSimpleQueryResponseMessages(this.receiveChannel)
 }
 
-suspend fun prepareStatement(pgConn: PgConnection, preparedStatement: PreparedStatement) {
+suspend fun PgConnection.prepareStatement(preparedStatement: PreparedStatement) {
     val parseMessage = ParseMessage(
         preparedStatement.name ?: "",
         preparedStatement.sql,
@@ -99,33 +99,33 @@ suspend fun prepareStatement(pgConn: PgConnection, preparedStatement: PreparedSt
 
     val parseMessageBytes = serialize(parseMessage)
     println("writing ${parseMessageBytes.size} bytes")
-    pgConn.sendChannel.writeFully(parseMessageBytes)
+    this.sendChannel.writeFully(parseMessageBytes)
 }
 
-suspend fun bind(pgConn: PgConnection, statementName: String? = null, portalName: String? = null, parameterValues: List<ParameterValue>) {
+suspend fun PgConnection.bind(statementName: String? = null, portalName: String? = null, parameterValues: List<ParameterValue>) {
     val parameterFormats = List(parameterValues.size, { ParameterFormat.TEXT })
     val bindMessage = BindMessage(portalName ?: "", statementName ?: "", parameterFormats, parameterValues)
     val bytes = serialize(bindMessage)
-    pgConn.sendChannel.writeFully(bytes)
+    this.sendChannel.writeFully(bytes)
 }
 
-suspend fun execute(pgConn: PgConnection, portalName: String? = null): ExecuteResponse {
+suspend fun PgConnection.execute(portalName: String? = null): ExecuteResponse {
     val executeMessage = ExecuteMessage(portalName ?: "")
     val bytes = serialize(executeMessage)
-    pgConn.sendChannel.writeFully(bytes)
-    sendSyncMessage(pgConn)
+    this.sendChannel.writeFully(bytes)
+    this.sendSyncMessage()
 
     // just read until Z
-    return readExecuteResponse(pgConn)
+    return this.readExecuteResponse()
 }
 
-suspend fun readExecuteResponse(pgConn: PgConnection): ExecuteResponse {
+suspend fun PgConnection.readExecuteResponse(): ExecuteResponse {
     var message: PgWireMessage
     var dataRows = mutableListOf<List<String>>()
 
     // just putting a bound on this for sanity's sake
     for (i in 0..99) {
-        message = readMessage(pgConn.receiveChannel)
+        message = readMessage(this.receiveChannel)
         when(message.messageType) {
             MessageType.ERROR_RESPONSE.value -> println("Got ErrorResponse message from server")
             MessageType.PARSE_COMPLETE.value -> println("Parse complete")
@@ -153,14 +153,14 @@ suspend fun readExecuteResponse(pgConn: PgConnection): ExecuteResponse {
     return emptyList()
 }
 
-suspend fun sendSyncMessage(pgConn: PgConnection) {
+suspend fun PgConnection.sendSyncMessage() {
     val bytes = serialize(SyncMessage)
-    pgConn.sendChannel.writeFully(bytes)
+    this.sendChannel.writeFully(bytes)
 }
 
-suspend fun sendFlushMessage(pgConn: PgConnection) {
+suspend fun PgConnection.sendFlushMessage() {
     val bytes = serialize(FlushMessage)
-    pgConn.sendChannel.writeFully(bytes)
+    this.sendChannel.writeFully(bytes)
 }
 
 /**
