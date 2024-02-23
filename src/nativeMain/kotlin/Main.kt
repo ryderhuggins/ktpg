@@ -64,6 +64,22 @@ private suspend fun preparedStatementStuff(pgConn: PgConnection) {
     if (pgConn.execute().size != 54) {
         println("FAILED TEST: select * from bookings where book_date > \$1;")
     }
+
+    pgConn.prepareStatement(
+        "",
+        "select * from bookings where total_amount > $1;"
+    )
+
+    pgConn.bind(
+        statementName = "",
+        parameterValues = listOf(ParameterValue.Numeric(50000.00))
+    )
+
+    if (pgConn.execute().size != 144164) {
+        println("FAILED TEST: select * from bookings where total_amount > \$1;")
+    }
+
+    // TODO some kind of test for serializing an absurdly large numeric number
 }
 
 suspend fun simpleQueryStuff(pgConn: PgConnection) {
