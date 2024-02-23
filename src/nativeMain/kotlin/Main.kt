@@ -14,7 +14,7 @@ fun main() {
         }
 
         launch(Dispatchers.IO) {
-            simpleQueryStuff(pgConn)
+//            simpleQueryStuff(pgConn)
             preparedStatementStuff(pgConn)
             close(pgConn)
         }
@@ -25,26 +25,30 @@ fun main() {
 private suspend fun preparedStatementStuff(pgConn: PgConnection) {
     pgConn.prepareStatement(
         "named_statement",
-        "select * from information_schema.tables where table_name = $1",
+        "select * from bookings where book_ref like $1;",
         null
     )
 
-    pgConn.bind(statementName = "named_statement", parameterValues = listOf(ParameterValue.Text("pg_class")))
+    pgConn.bind(statementName = "named_statement", parameterValues = listOf(ParameterValue.Text("%73")))
 
-    pgConn.execute()
+    if (pgConn.execute().size != 1058) {
+        println("FAILED TEST: select * from bookings where book_ref like \$1;");
+    }
 
     pgConn.prepareStatement(
         "",
-        "select table_name, table_type from information_schema.tables where table_name = $1 and table_type = $2",
-        listOf(PgTypes.VARCHAR, PgTypes.VARCHAR)
+        "select * from flights where flight_id = $1;",
+        listOf(PgTypes.INT4)
     )
 
     pgConn.bind(
         statementName = "",
-        parameterValues = listOf(ParameterValue.Text("pg_class"), ParameterValue.Text("hello"))
+        parameterValues = listOf(ParameterValue.Integer(32658))
     )
 
-    val res2 = pgConn.execute()
+    if (pgConn.execute().size != 1) {
+        println("FAILED TEST: select * from flights where flight_id = \$1;")
+    }
 }
 
 suspend fun simpleQueryStuff(pgConn: PgConnection) {

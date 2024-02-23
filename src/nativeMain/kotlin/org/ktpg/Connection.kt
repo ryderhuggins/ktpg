@@ -116,7 +116,7 @@ suspend fun PgConnection.readExecuteResponse(): ExecuteResponse {
     var dataRows = mutableListOf<List<String>>()
 
     // just putting a bound on this for sanity's sake
-    for (i in 0..99) {
+    for (i in 0..999999) {
         message = readMessage(this.receiveChannel)
         when(message.messageType) {
             MessageType.ERROR_RESPONSE.value -> println("Got ErrorResponse message from server")

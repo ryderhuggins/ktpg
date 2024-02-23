@@ -16,11 +16,11 @@ sealed interface ParameterValue {
     data class VarChar(val varChar: String) : ParameterValue
 }
 
+// TODO - THIS ONLY SERIALIZES TO TEXT
 internal fun serializeParameterValue(parameterValue: ParameterValue): ByteArray {
     return when (parameterValue) {
-        is ParameterValue.Text -> {
-            i32ToByteArray(parameterValue.text.length) + parameterValue.text.toByteArray() 
-        }
+        is ParameterValue.Text -> i32ToByteArray(parameterValue.text.length) + parameterValue.text.toByteArray()
+        is ParameterValue.Integer -> i32ToByteArray(parameterValue.integer.toString().length) + parameterValue.integer.toString().toByteArray()
         else -> byteArrayOf()
     }
 }
