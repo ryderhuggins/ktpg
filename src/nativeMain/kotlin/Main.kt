@@ -67,7 +67,8 @@ private suspend fun preparedStatementStuff(pgConn: PgConnection) {
 
     pgConn.prepareStatement(
         "",
-        "select * from bookings where total_amount > $1;"
+        "select * from bookings where total_amount > $1;",
+        listOf(PgTypes.NUMERIC)
     )
 
     pgConn.bind(
@@ -80,6 +81,45 @@ private suspend fun preparedStatementStuff(pgConn: PgConnection) {
     }
 
     // TODO some kind of test for serializing an absurdly large numeric number
+
+    pgConn.prepareStatement(
+        "",
+        "select * from things where thing_id = $1;",
+        listOf(PgTypes.UUID)
+    )
+
+    pgConn.bind(
+        statementName = "",
+        parameterValues = listOf(ParameterValue.Uuid("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
+    )
+
+    if (pgConn.execute().size != 1) {
+        println("FAILED TEST: select * from things where thing_id = \$1;")
+    }
+
+    pgConn.prepareStatement(
+        "",
+        "select * from things where bool_val = $1;",
+        listOf(PgTypes.BOOL)
+    )
+
+    pgConn.bind(
+        statementName = "",
+        parameterValues = listOf(ParameterValue.Boolean(false))
+    )
+
+    if (pgConn.execute().size != 2) {
+        println("FAILED TEST: select * from things where bool_val = \$1;")
+    }
+
+    pgConn.bind(
+        statementName = "",
+        parameterValues = listOf(ParameterValue.Boolean(true))
+    )
+
+    if (pgConn.execute().size != 3) {
+        println("FAILED TEST: select * from things where bool_val = \$1;")
+    }
 }
 
 suspend fun simpleQueryStuff(pgConn: PgConnection) {
