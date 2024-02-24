@@ -7,7 +7,6 @@ import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import org.ktpg.*
 import org.ktpg.i32ToByteArray
-import org.ktpg.readString
 
 data class ColumnDescriptor(val name: String,
                             val tableOid: Int,

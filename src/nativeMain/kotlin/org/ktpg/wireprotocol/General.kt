@@ -6,7 +6,6 @@ import com.github.michaelbull.result.Result
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import org.ktpg.i32ToByteArray
-import org.ktpg.readString
 
 data class PgWireMessage(val messageType: Char, val messageBytes: ByteReadPacket)
 
@@ -28,6 +27,43 @@ enum class MessageType(val value: Char) {
     NOTICE_RESPONSE('N'),
     PARSE_COMPLETE('1'),
     BIND_COMPLETE('2')
+}
+
+/**
+ * This will read a string until null termination or until end of packet data
+ */
+internal fun readString(packet: ByteReadPacket): String {
+    var current: Int = packet.readByte().toInt()
+
+    if (current.toInt() == 0) {
+        return ""
+    }
+
+    val s = StringBuilder()
+    while(current != 0 && !packet.endOfInput) {
+        s.append(current.toChar())
+        current = packet.readByte().toInt()
+    }
+    if (current != 0) {
+        // this just means we hit end of input, but still need to append the last character read above
+        s.append(current.toChar())
+    }
+
+    return s.toString()
+}
+
+internal fun readString(packet: ByteReadPacket, limit: Int): String {
+    var current: Int
+
+    val s = StringBuilder()
+    var count = 0
+    do {
+        current = packet.readByte().toInt()
+        s.append(current.toChar())
+        count++
+    } while(current != 0 && !packet.endOfInput && count < limit)
+
+    return s.toString()
 }
 
 /**

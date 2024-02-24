@@ -10,7 +10,6 @@ import org.ktpg.*
 import org.ktpg.getScramClientFinalMessage
 import org.ktpg.i32ToByteArray
 import org.ktpg.parseServerFirstMessage
-import org.ktpg.readString
 
 sealed interface AuthenticationResponse
 data object AuthenticationOk : AuthenticationResponse
