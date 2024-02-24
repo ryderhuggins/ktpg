@@ -3,7 +3,7 @@ The humble beginnings of a Kotlin/Native postgres client
 
 ## Goals
 - Implement a postgres client in K/N 
-- Serve as the foundation for a future proper database driver
+- Serve as the foundation for a proper K/N database driver
 
 ## Purpose
 - Why? -> to be able to write e.g. a ktor K/N server with a native postgres client 
@@ -13,13 +13,16 @@ The humble beginnings of a Kotlin/Native postgres client
 Implemented: 
 - Connection startup with no auth, password auth, or scram-sha-256 auth 
 - Simple query and result parsing 
-- Prepared statements and result parsing (only with string and int parameter type bindings)
+- Prepared statements and result parsing (with limited type bindings. see BindMessage.kt)
+
+WIP
+- Integration tests (see Main.kt)
 
 Not implemented: 
 - Connection over SSL
-- Other SASL authentication methods 
-- Integration tests
+- Other SASL authentication methods
 - Some client (frontend) commands: CancelRequest, Close, Describe, FunctionCall
+- Publish to maven central
   
 See Docs/Feature Roadmap.txt for more info
 

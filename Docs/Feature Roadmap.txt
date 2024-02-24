@@ -2,13 +2,13 @@
 Biggest missing features IMO
 - SSL/TLS (& channel binding for SASL/SCRAM)
 - more data types to be serialized in bind(...) calls
+    - also support binary serialization - it's only text now
 - handle binary format in response from server
 - proper integration test setup
 - more unit tests
 - remaining client commands: CancelRequest, Close, Describe, FunctionCall, among others
 
 Other TODOs
-- add more data types for prepared statement binding -> it can only do strings and ints now
 - Change print statements to proper logging
 - Create a Connect function that just takes a connection string
 - Parse configuration from environment variables
