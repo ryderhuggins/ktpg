@@ -26,7 +26,8 @@ enum class MessageType(val value: Char) {
     EMPTY_QUERY_RESPONSE('I'),
     NOTICE_RESPONSE('N'),
     PARSE_COMPLETE('1'),
-    BIND_COMPLETE('2')
+    BIND_COMPLETE('2'),
+    CLOSE_COMPLETE('3')
 }
 
 /**

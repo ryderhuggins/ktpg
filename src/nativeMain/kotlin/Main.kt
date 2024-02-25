@@ -14,7 +14,7 @@ fun main() {
         }
 
         launch(Dispatchers.IO) {
-//            simpleQueryStuff(pgConn)
+            simpleQueryStuff(pgConn)
             preparedStatementStuff(pgConn)
             close(pgConn)
         }
@@ -132,6 +132,10 @@ suspend fun simpleQueryStuff(pgConn: PgConnection) {
         .onFailure { println("** FAILED ** test with error: $it") }
 
     pgConn.executeSimpleQuery("select * from book_ref limit 100;")
+    pgConn.readSimpleQueryResponse()
+        .onFailure { println("** FAILED ** test with error: $it") }
+
+    pgConn.executeSimpleQuery("select * from bookings limit 10;")
     pgConn.readSimpleQueryResponse()
         .onFailure { println("** FAILED ** test with error: $it") }
 //

@@ -8,13 +8,15 @@ import io.ktor.utils.io.core.*
 import org.ktpg.*
 import org.ktpg.i32ToByteArray
 
-data class ColumnDescriptor(val name: String,
-                            val tableOid: Int,
-                            val columnId: Short,
-                            val dataTypeOid: Int,
-                            val dataTypeSize: Short,
-                            val typeModifier: Int,
-                            val formatCode: Short)
+data class ColumnDescriptor(
+    val name: String,
+    val tableOid: Int,
+    val columnId: Short,
+    val dataTypeOid: Int,
+    val dataTypeSize: Short,
+    val typeModifier: Int,
+    val formatCode: Short
+)
 
 data class SimpleQueryResponse(
     val commandTag: String,

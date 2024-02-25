@@ -107,13 +107,12 @@ suspend fun PgConnection.execute(portalName: String? = null): ExecuteResponse {
     this.sendChannel.writeFully(bytes)
     this.sendSyncMessage()
 
-    // just read until Z
     return this.readExecuteResponse()
 }
 
 suspend fun PgConnection.readExecuteResponse(): ExecuteResponse {
     var message: PgWireMessage
-    var dataRows = mutableListOf<List<String>>()
+    val dataRows = mutableListOf<List<String>>()
 
     // just putting a bound on this for sanity's sake
     for (i in 0..999999) {
@@ -127,7 +126,7 @@ suspend fun PgConnection.readExecuteResponse(): ExecuteResponse {
                 val columnCount = message.messageBytes.readShort()
                 val dataRow = mutableListOf<String>()
 
-                fields@ for (i in 0..<columnCount) {
+                fields@ for (j in 0..<columnCount) {
                     val fieldLength = message.messageBytes.readInt()
                     if (fieldLength == -1) {
 //                        println("Field length -1. adding empty string to result list")
@@ -146,8 +145,42 @@ suspend fun PgConnection.readExecuteResponse(): ExecuteResponse {
 }
 
 suspend fun PgConnection.sendSyncMessage() {
-    val bytes = serialize(SyncMessage)
-    this.sendChannel.writeFully(bytes)
+    this.sendChannel.writeFully(SyncMessage.serialize())
+}
+
+suspend fun PgConnection.closePreparedStatement(statementName: String) {
+    val closeMessage = CloseMessage(
+        CloseTarget.PreparedStatement,
+        statementName
+    )
+
+    this.sendChannel.writeFully(closeMessage.serialize())
+    readUntilZ() ?: println("Error closing statement: $statementName")
+}
+
+suspend fun PgConnection.closePortal(portalName: String) {
+    val closeMessage = CloseMessage(
+        CloseTarget.Portal,
+        portalName
+    )
+
+    this.sendChannel.writeFully(closeMessage.serialize())
+    readUntilZ() ?: println("Error closing portal: $portalName")
+}
+
+suspend fun PgConnection.readUntilZ(): Map<String,String>? {
+    var message: PgWireMessage
+    var err: Map<String, String>? = null
+
+    for (i in 0..999999) {
+        message = readMessage(this.receiveChannel)
+        when(message.messageType) {
+            MessageType.ERROR_RESPONSE.value -> err = parseErrorOrNoticeResponseMessage(message.messageBytes)
+            MessageType.READY_FOR_QUERY.value -> break
+            else -> { }
+        }
+    }
+    return err
 }
 
 suspend fun PgConnection.sendFlushMessage() {
