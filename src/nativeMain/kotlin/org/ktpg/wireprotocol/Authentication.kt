@@ -6,10 +6,10 @@ import com.github.michaelbull.result.Result
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import org.kotlincrypto.hash.md.MD5
-import org.ktpg.*
-import org.ktpg.getScramClientFinalMessage
-import org.ktpg.i32ToByteArray
-import org.ktpg.parseServerFirstMessage
+import org.ktpg.wireprotocol.frontend.CleartextPasswordMessage
+import org.ktpg.wireprotocol.frontend.SaslInitialResponse
+import org.ktpg.wireprotocol.frontend.StartupMessage
+import org.ktpg.wireprotocol.frontend.serialize
 
 sealed interface AuthenticationResponse
 data object AuthenticationOk : AuthenticationResponse

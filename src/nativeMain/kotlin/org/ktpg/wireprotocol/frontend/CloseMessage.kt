@@ -1,7 +1,7 @@
-package org.ktpg.wireprotocol
+package org.ktpg.wireprotocol.frontend
 
 import io.ktor.utils.io.core.*
-import org.ktpg.i32ToByteArray
+import org.ktpg.wireprotocol.i32ToByteArray
 
 internal enum class StatementOrPortal { PreparedStatement, Portal }
 

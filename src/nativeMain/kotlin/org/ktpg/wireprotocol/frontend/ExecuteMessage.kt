@@ -1,7 +1,7 @@
-package org.ktpg.wireprotocol
+package org.ktpg.wireprotocol.frontend
 
 import io.ktor.utils.io.core.toByteArray
-import org.ktpg.i32ToByteArray
+import org.ktpg.wireprotocol.i32ToByteArray
 
 internal data class ExecuteMessage(
     val portalName: String = "",
@@ -19,5 +19,5 @@ internal fun serialize(executeMessage: ExecuteMessage): ByteArray {
     }
     
     val size = 4 + serializedName.size + 4
-    return messageType + i32ToByteArray(size) + serializedName + i32ToByteArray(executeMessage.maxReturnRows) 
+    return messageType + i32ToByteArray(size) + serializedName + i32ToByteArray(executeMessage.maxReturnRows)
 }

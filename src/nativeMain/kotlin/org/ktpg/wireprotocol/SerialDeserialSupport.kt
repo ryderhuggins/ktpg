@@ -1,6 +1,4 @@
-package org.ktpg
-
-import io.ktor.utils.io.core.*
+package org.ktpg.wireprotocol
 
 fun String.toAscii() = this.map { it.code.toByte() }
 

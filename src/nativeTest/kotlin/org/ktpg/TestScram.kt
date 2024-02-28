@@ -1,5 +1,6 @@
 package org.ktpg
 
+import org.ktpg.wireprotocol.getScramClientFinalMessage
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.test.Test
 

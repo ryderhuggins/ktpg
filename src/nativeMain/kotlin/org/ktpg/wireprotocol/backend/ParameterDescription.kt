@@ -1,7 +1,7 @@
 package org.ktpg.wireprotocol.backend
 
 import io.ktor.utils.io.core.*
-import org.ktpg.wireprotocol.ColumnDescriptor
+import org.ktpg.wireprotocol.frontend.ColumnDescriptor
 import org.ktpg.wireprotocol.PgTypes
 
 sealed interface DescribeResponseMessages {

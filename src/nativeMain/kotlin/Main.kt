@@ -1,8 +1,7 @@
 import com.github.michaelbull.result.*
 import kotlinx.coroutines.*
-import org.ktpg.wireprotocol.ParameterValue
+import org.ktpg.wireprotocol.frontend.ParameterValue
 import org.ktpg.wireprotocol.PgTypes
-import platform.posix.wait
 
 fun main() {
     runBlocking {

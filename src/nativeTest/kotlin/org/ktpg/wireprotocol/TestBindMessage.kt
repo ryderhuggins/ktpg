@@ -1,6 +1,10 @@
 package org.ktpg.wireprotocol
 
 import io.ktor.util.*
+import org.ktpg.wireprotocol.frontend.BindMessage
+import org.ktpg.wireprotocol.frontend.ParameterFormat
+import org.ktpg.wireprotocol.frontend.ParameterValue
+import org.ktpg.wireprotocol.frontend.serialize
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.test.Test
 

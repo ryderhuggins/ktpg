@@ -1,7 +1,7 @@
-package org.ktpg.wireprotocol
+package org.ktpg.wireprotocol.frontend
 
-import org.ktpg.i32ToByteArray
-import org.ktpg.toAscii
+import org.ktpg.wireprotocol.i32ToByteArray
+import org.ktpg.wireprotocol.toAscii
 
 internal data class SaslInitialResponse(
     val gs2Header: String,

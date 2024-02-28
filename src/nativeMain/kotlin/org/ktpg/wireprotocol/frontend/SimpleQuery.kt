@@ -1,14 +1,16 @@
-package org.ktpg.wireprotocol
+package org.ktpg.wireprotocol.frontend
 
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
-import org.ktpg.*
-import org.ktpg.i32ToByteArray
+import org.ktpg.wireprotocol.*
 import org.ktpg.wireprotocol.backend.parseErrorOrNoticeResponseMessage
 import org.ktpg.wireprotocol.backend.readRowDescriptionMessage
+import org.ktpg.wireprotocol.i32ToByteArray
+import org.ktpg.wireprotocol.readMessage
+import org.ktpg.wireprotocol.readString
 
 data class ColumnDescriptor(
     val name: String,

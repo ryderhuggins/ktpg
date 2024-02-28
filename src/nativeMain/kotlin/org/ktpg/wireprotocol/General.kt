@@ -5,7 +5,8 @@ import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
-import org.ktpg.i32ToByteArray
+import org.ktpg.wireprotocol.frontend.StartupMessage
+import org.ktpg.wireprotocol.frontend.serialize
 
 typealias ErrorResponse = Map<String,String>
 typealias NoticeResponse = Map<String,String>

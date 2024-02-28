@@ -11,6 +11,10 @@ import org.ktpg.wireprotocol.*
 import org.ktpg.wireprotocol.backend.*
 import org.ktpg.wireprotocol.backend.readParameterDescriptionMessage
 import org.ktpg.wireprotocol.backend.readRowDescriptionMessage
+import org.ktpg.wireprotocol.frontend.*
+import org.ktpg.wireprotocol.frontend.BindMessage
+import org.ktpg.wireprotocol.frontend.DescribeMessage
+import org.ktpg.wireprotocol.frontend.serialize
 
 /**
  * TODO - for now i'm just putting exposed data structures here (i.e. supposed to be used by clients)
@@ -29,6 +33,16 @@ data class PortalDescription(
     val noticeResponse: NoticeResponse?
 )
 
+data class PgConnectionStartupParameters internal constructor(
+    val pgConn: PgConnection,
+    val startupParameters: StartupParameters
+)
+
+data class PgConnectionFailure internal constructor(
+    val errorString: String
+) : PgConnectionResult
+
+
 data class PgConnection internal constructor(
     val host: String,
     val port: Int,
@@ -42,14 +56,6 @@ data class PgConnection internal constructor(
     internal val selectorManager: SelectorManager
 ) : PgConnectionResult
 
-data class PgConnectionStartupParameters internal constructor(
-    val pgConn: PgConnection,
-    val startupParameters: StartupParameters
-)
-
-data class PgConnectionFailure internal constructor(
-    val errorString: String
-) : PgConnectionResult
 
 suspend fun getConnection(host: String, port: Int, user: String, password: String, database: String, clientParameters: Map<String, String>): Result<PgConnectionStartupParameters, PgConnectionFailure> {
     try {
@@ -126,10 +132,7 @@ suspend fun PgConnection.readExecuteResponse(): ExecuteResponse {
     for (i in 0..999999) {
         message = readMessage(this.receiveChannel)
         when(message.messageType) {
-            MessageType.ERROR_RESPONSE.value -> println("Got ErrorResponse message from server")
-            MessageType.PARSE_COMPLETE.value -> println("Parse complete")
-            MessageType.BIND_COMPLETE.value -> println("Bind complete")
-            MessageType.READY_FOR_QUERY.value -> { println("Ready for query"); return dataRows; }
+            MessageType.READY_FOR_QUERY.value -> return dataRows;
             MessageType.DATA_ROW.value -> {
                 val columnCount = message.messageBytes.readShort()
                 val dataRow = mutableListOf<String>()
@@ -137,7 +140,6 @@ suspend fun PgConnection.readExecuteResponse(): ExecuteResponse {
                 fields@ for (j in 0..<columnCount) {
                     val fieldLength = message.messageBytes.readInt()
                     if (fieldLength == -1) {
-//                        println("Field length -1. adding empty string to result list")
                         dataRow.add("")
                         continue@fields
                     }
@@ -146,6 +148,8 @@ suspend fun PgConnection.readExecuteResponse(): ExecuteResponse {
                 }
                 dataRows.add(dataRow)
             }
+            MessageType.NOTICE_RESPONSE.value -> println("hi")
+            MessageType.ERROR_RESPONSE.value -> println("Got ErrorResponse message from server")
         }
     }
     println("Exhausted loop count while reading execution response")
