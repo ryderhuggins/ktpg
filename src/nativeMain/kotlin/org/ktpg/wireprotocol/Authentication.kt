@@ -6,6 +6,8 @@ import com.github.michaelbull.result.Result
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import org.kotlincrypto.hash.md.MD5
+import org.ktpg.wireprotocol.backend.BackendMessageType
+import org.ktpg.wireprotocol.backend.readMessage
 import org.ktpg.wireprotocol.frontend.CleartextPasswordMessage
 import org.ktpg.wireprotocol.frontend.SaslInitialResponse
 import org.ktpg.wireprotocol.frontend.StartupMessage
@@ -60,7 +62,7 @@ internal suspend fun startupConnection(pgConn: PgConnection): Result<StartupPara
 private suspend fun readAuthenticationResponse(receiveChannel: ByteReadChannel): AuthenticationResponse {
     val message = readMessage(receiveChannel)
 
-    if (message.messageType != MessageType.AUTHENTICATION.value) {
+    if (message.messageType != BackendMessageType.AUTHENTICATION.value) {
         println("Received unexpected message from server. Expected Authentication Response, got: ${message.messageType}")
         return AuthenticationFailure("Received unexpected message from server. Expected Authentication Response, got: ${message.messageType}")
     }

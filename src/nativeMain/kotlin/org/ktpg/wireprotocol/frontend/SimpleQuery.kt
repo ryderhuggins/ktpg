@@ -6,10 +6,11 @@ import com.github.michaelbull.result.Result
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import org.ktpg.wireprotocol.*
+import org.ktpg.wireprotocol.backend.*
 import org.ktpg.wireprotocol.backend.parseErrorOrNoticeResponseMessage
+import org.ktpg.wireprotocol.backend.readMessage
 import org.ktpg.wireprotocol.backend.readRowDescriptionMessage
 import org.ktpg.wireprotocol.i32ToByteArray
-import org.ktpg.wireprotocol.readMessage
 import org.ktpg.wireprotocol.readString
 
 data class ColumnDescriptor(
@@ -59,10 +60,10 @@ internal suspend fun readSimpleQueryResponseMessages(receiveChannel: ByteReadCha
         message = readMessage(receiveChannel)
 
         when(message.messageType) {
-            MessageType.ROW_DESCRIPTION.value -> {
+            BackendMessageType.ROW_DESCRIPTION.value -> {
                 columns = readRowDescriptionMessage(message.messageBytes)
             }
-            MessageType.DATA_ROW.value -> {
+            BackendMessageType.DATA_ROW.value -> {
                 val columnCount = message.messageBytes.readShort()
                 val dataRow = mutableMapOf<String,String>()
 
@@ -77,7 +78,7 @@ internal suspend fun readSimpleQueryResponseMessages(receiveChannel: ByteReadCha
                 }
                 dataRows.add(dataRow)
             }
-            MessageType.COMMAND_COMPLETE.value -> {
+            BackendMessageType.COMMAND_COMPLETE.value -> {
                 commandTag = readString(message.messageBytes)
                 result.add(SimpleQueryResponse(commandTag, columns, dataRows, emptyMap(), notices))
                 commandTag = ""
@@ -85,17 +86,17 @@ internal suspend fun readSimpleQueryResponseMessages(receiveChannel: ByteReadCha
                 dataRows = mutableListOf<Map<String, String>>()
                 notices = mutableMapOf<String,String>()
             }
-            MessageType.EMPTY_QUERY_RESPONSE.value -> {
+            BackendMessageType.EMPTY_QUERY_RESPONSE.value -> {
                 // not really anything to do here
                 println("Received Empty Query Response message")
             }
-            MessageType.COPY_IN_RESPONSE.value -> {
+            BackendMessageType.COPY_IN_RESPONSE.value -> {
                 println("Received Copy In Response message")
             }
-            MessageType.COPY_OUT_RESPONSE.value -> {
+            BackendMessageType.COPY_OUT_RESPONSE.value -> {
                 println("Received Copy Out Response message")
             }
-            MessageType.ERROR_RESPONSE.value -> {
+            BackendMessageType.ERROR_RESPONSE.value -> {
                 val err = parseErrorOrNoticeResponseMessage(message.messageBytes)
 //                println("Received error message from server: $err")
                 result.add(SimpleQueryResponse(commandTag, columns, dataRows, err, notices))
@@ -104,11 +105,11 @@ internal suspend fun readSimpleQueryResponseMessages(receiveChannel: ByteReadCha
                 dataRows = mutableListOf<Map<String, String>>()
                 notices = mutableMapOf<String,String>()
             }
-            MessageType.NOTICE_RESPONSE.value -> {
+            BackendMessageType.NOTICE_RESPONSE.value -> {
                 notices = parseErrorOrNoticeResponseMessage(message.messageBytes)
 //                println("Received notice message from server: $notices")
             }
-            MessageType.READY_FOR_QUERY.value -> {
+            BackendMessageType.READY_FOR_QUERY.value -> {
                 val status = message.messageBytes.readByte().toInt().toChar()
 //                println("Received Ready For Query with status: $status")
                 return Ok(result)

@@ -132,8 +132,8 @@ suspend fun PgConnection.readExecuteResponse(): ExecuteResponse {
     for (i in 0..999999) {
         message = readMessage(this.receiveChannel)
         when(message.messageType) {
-            MessageType.READY_FOR_QUERY.value -> return dataRows;
-            MessageType.DATA_ROW.value -> {
+            BackendMessageType.READY_FOR_QUERY.value -> return dataRows;
+            BackendMessageType.DATA_ROW.value -> {
                 val columnCount = message.messageBytes.readShort()
                 val dataRow = mutableListOf<String>()
 
@@ -148,8 +148,8 @@ suspend fun PgConnection.readExecuteResponse(): ExecuteResponse {
                 }
                 dataRows.add(dataRow)
             }
-            MessageType.NOTICE_RESPONSE.value -> println("hi")
-            MessageType.ERROR_RESPONSE.value -> println("Got ErrorResponse message from server")
+            BackendMessageType.NOTICE_RESPONSE.value -> println("hi")
+            BackendMessageType.ERROR_RESPONSE.value -> println("Got ErrorResponse message from server")
         }
     }
     println("Exhausted loop count while reading execution response")
@@ -194,13 +194,13 @@ suspend fun PgConnection.describePreparedStatement(statementName: String): Resul
 
     for (message in response) {
         when (message) {
-            is DescribeResponseMessages.ErrorResponse -> {
+            is BackendMessage.ErrorResponse -> {
                 return Err(message.err)
             }
-            is DescribeResponseMessages.NoticeResponse -> {
+            is BackendMessage.NoticeResponse -> {
                 noticeResponse = message.notice
             }
-            is DescribeResponseMessages.ParameterDescription -> {
+            is BackendMessage.ParameterDescription -> {
                 parameters = message.parameters
             }
             else -> {}
@@ -224,13 +224,13 @@ suspend fun PgConnection.describePortal(portalName: String): Result<PortalDescri
 
     for (message in response) {
         when (message) {
-            is DescribeResponseMessages.ErrorResponse -> {
+            is BackendMessage.ErrorResponse -> {
                 return Err(message.err)
             }
-            is DescribeResponseMessages.NoticeResponse -> {
+            is BackendMessage.NoticeResponse -> {
                 noticeResponse = message.notice
             }
-            is DescribeResponseMessages.RowDescription -> {
+            is BackendMessage.RowDescription -> {
                 rowDescription = message.columns
             }
             else -> {}
@@ -240,34 +240,34 @@ suspend fun PgConnection.describePortal(portalName: String): Result<PortalDescri
     return Ok(PortalDescription(rowDescription, noticeResponse))
 }
 
-suspend fun PgConnection.readDescribeResponse(): List<DescribeResponseMessages> {
+suspend fun PgConnection.readDescribeResponse(): List<BackendMessage> {
     // "happy path" message types include 1, t, T, 2, E, N, Z
     var message: PgWireMessage
-    val messages = mutableListOf<DescribeResponseMessages>()
+    val messages = mutableListOf<BackendMessage>()
 
     for (i in 0..999999) {
         message = readMessage(this.receiveChannel)
         when(message.messageType) {
-            MessageType.READY_FOR_QUERY.value -> break
-            MessageType.PARAMETER_DESCRIPTION.value -> {
+            BackendMessageType.READY_FOR_QUERY.value -> break
+            BackendMessageType.PARAMETER_DESCRIPTION.value -> {
                 val parameterDescription = readParameterDescriptionMessage(message.messageBytes)
-                messages.add(DescribeResponseMessages.ParameterDescription(parameterDescription))
+                messages.add(BackendMessage.ParameterDescription(parameterDescription))
             }
-            MessageType.ROW_DESCRIPTION.value -> {
+            BackendMessageType.ROW_DESCRIPTION.value -> {
                 val columns = readRowDescriptionMessage(message.messageBytes)
-                messages.add(DescribeResponseMessages.RowDescription(columns))
+                messages.add(BackendMessage.RowDescription(columns))
             }
-            MessageType.ERROR_RESPONSE.value -> {
+            BackendMessageType.ERROR_RESPONSE.value -> {
                 val err = parseErrorOrNoticeResponseMessage(message.messageBytes)
-                messages.add(DescribeResponseMessages.ErrorResponse(err))
+                messages.add(BackendMessage.ErrorResponse(err))
             }
-            MessageType.NOTICE_RESPONSE.value -> {
+            BackendMessageType.NOTICE_RESPONSE.value -> {
                 val notice = parseErrorOrNoticeResponseMessage(message.messageBytes)
-                messages.add(DescribeResponseMessages.NoticeResponse(notice))
+                messages.add(BackendMessage.NoticeResponse(notice))
             }
-            MessageType.PARSE_COMPLETE.value -> messages.add(DescribeResponseMessages.ParseComplete)
-            MessageType.BIND_COMPLETE.value -> messages.add(DescribeResponseMessages.BindComplete)
-            MessageType.CLOSE_COMPLETE.value -> messages.add(DescribeResponseMessages.CloseComplete)
+            BackendMessageType.PARSE_COMPLETE.value -> messages.add(BackendMessage.ParseComplete)
+            BackendMessageType.BIND_COMPLETE.value -> messages.add(BackendMessage.BindComplete)
+            BackendMessageType.CLOSE_COMPLETE.value -> messages.add(BackendMessage.CloseComplete)
             else -> { println("got unexpected message type while parsing describe response: ${message.messageType}") }
         }
     }
