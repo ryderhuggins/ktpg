@@ -11,7 +11,7 @@ internal fun SyncMessage.serialize(): ByteArray {
     return messageType + i32ToByteArray(4)
 }
 
-internal fun serialize(flushMessage: FlushMessage): ByteArray {
+internal fun FlushMessage.serialize(): ByteArray {
     val messageType = ByteArray(1)
     messageType[0] = 'H'.code.toByte()
     return messageType + i32ToByteArray(4)

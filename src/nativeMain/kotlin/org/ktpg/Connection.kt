@@ -275,22 +275,11 @@ suspend fun PgConnection.readDescribeResponse(): List<BackendMessage> {
 }
 
 suspend fun PgConnection.sendFlushMessage() {
-    val bytes = serialize(FlushMessage)
-    this.sendChannel.writeFully(bytes)
+    this.sendChannel.writeFully(FlushMessage.serialize())
 }
 
-/**
- * Planning preparedStatement interface
- * Need a sealed interface PgTypes { Int, Long, Text, Varchar, etc. }
- * if prepared statement is "UPDATE EMPLOYEES SET SALARY = ? WHERE ID = ?"
- * ps.setPgInt("$1", 10000).setPgText("$2", "501").build()
- * or there could be a buildPortal function that takes a prepared statement and a...
- *
- * prepareStatement(sqlString, p1TypeOid, p2TypeOid, p3TypeOid...)
- */
-
-suspend fun close(pgConn: PgConnection) {
-    sendTerminationMessage(pgConn.sendChannel)
-    pgConn.socket.close()
-    pgConn.selectorManager.close()
+suspend fun PgConnection.close() {
+    sendTerminationMessage(this.sendChannel)
+    this.socket.close()
+    this.selectorManager.close()
 }

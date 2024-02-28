@@ -8,6 +8,7 @@ import io.ktor.utils.io.core.*
 import org.ktpg.wireprotocol.backend.BackendMessageType
 import org.ktpg.wireprotocol.backend.readMessage
 import org.ktpg.wireprotocol.frontend.StartupMessage
+import org.ktpg.wireprotocol.frontend.TerminationMessage
 import org.ktpg.wireprotocol.frontend.serialize
 
 
@@ -64,8 +65,5 @@ internal suspend fun readStartupResponse(receiveChannel: ByteReadChannel): Resul
 }
 
 internal suspend fun sendTerminationMessage(sendChannel: ByteWriteChannel) {
-    val messageType = ByteArray(1)
-    messageType[0] = 'X'.code.toByte()
-    val terminationMessage = messageType + i32ToByteArray(4)
-    sendChannel.writeFully(terminationMessage)
+    sendChannel.writeFully(TerminationMessage.serialize())
 }

@@ -13,7 +13,7 @@ fun main() {
         launch(Dispatchers.IO) {
             simpleQueryStuff(pgConn)
             preparedStatementStuff(pgConn)
-            close(pgConn)
+            pgConn.close()
         }
 
     }
