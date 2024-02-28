@@ -7,6 +7,9 @@ import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import org.ktpg.i32ToByteArray
 
+typealias ErrorResponse = Map<String,String>
+typealias NoticeResponse = Map<String,String>
+
 data class PgWireMessage(val messageType: Char, val messageBytes: ByteReadPacket)
 
 data class StartupParameters(val parameterStatusMap: Map<String,String>, val backendKeyDataMap: Map<String,Int>)
@@ -27,7 +30,8 @@ enum class MessageType(val value: Char) {
     NOTICE_RESPONSE('N'),
     PARSE_COMPLETE('1'),
     BIND_COMPLETE('2'),
-    CLOSE_COMPLETE('3')
+    CLOSE_COMPLETE('3'),
+    PARAMETER_DESCRIPTION('t')
 }
 
 /**
@@ -131,47 +135,4 @@ internal suspend fun sendTerminationMessage(sendChannel: ByteWriteChannel) {
     messageType[0] = 'X'.code.toByte()
     val terminationMessage = messageType + i32ToByteArray(4)
     sendChannel.writeFully(terminationMessage)
-}
-
-internal fun parseErrorOrNoticeResponseMessage(messageBytes: ByteReadPacket): Map<String, String> {
-    val errorInfo = mutableMapOf<String,String>()
-    var fieldType: Byte
-
-    // error fields defined here: https://www.postgresql.org/docs/current/protocol-error-fields.html
-    var errorKey: String
-    var errorValue: String
-    repeat (10000) {
-        fieldType = messageBytes.readByte()
-        if (fieldType.toInt() == 0) {
-            messageBytes.discard()
-            return errorInfo
-        }
-
-        errorKey = when(fieldType.toInt().toChar()) {
-            'S' -> "Severity"
-            'V' -> "Severity"
-            'C' -> "Code"
-            'M' -> "Message"
-            'D' -> "Detail"
-            'H' -> "Hint"
-            'P' -> "Position"
-            'p' -> "Internal Position"
-            'q' -> "Internal Query"
-            'W' -> "Where"
-            's' -> "Schema"
-            't' -> "Table name"
-            'c' -> "Column name"
-            'd' -> "Data type name"
-            'n' -> "Constraint name"
-            'F' -> "File"
-            'L' -> "Line"
-            'R' -> "Routine"
-            else -> "UNKNOWN"
-        }
-
-        errorValue = readString(messageBytes)
-        errorInfo[errorKey] = errorValue
-    }
-
-    return errorInfo
 }

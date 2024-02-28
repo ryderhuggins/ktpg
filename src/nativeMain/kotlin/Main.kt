@@ -1,10 +1,8 @@
 import com.github.michaelbull.result.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.ktpg.wireprotocol.ParameterValue
 import org.ktpg.wireprotocol.PgTypes
+import platform.posix.wait
 
 fun main() {
     runBlocking {
@@ -120,6 +118,39 @@ private suspend fun preparedStatementStuff(pgConn: PgConnection) {
     if (pgConn.execute().size != 3) {
         println("FAILED TEST: select * from things where bool_val = \$1;")
     }
+
+    pgConn.prepareStatement(
+        "describe_me",
+        "select * from things where bool_val = $1 and thing_id = $2;",
+        listOf(PgTypes.BOOL, PgTypes.UUID)
+    )
+
+    pgConn.describePreparedStatement("describe_me")
+        .onSuccess {
+            if (it.parameters.size !=2 || it.parameters[0] != PgTypes.BOOL || it.parameters[1] != PgTypes.UUID) {
+                println("Failed test to describe prepared statement")
+            }
+        }.onFailure {
+            println("Failed test to describe prepared statement")
+        }
+
+    pgConn.bind(
+        statementName = "describe_me",
+        parameterValues = listOf(ParameterValue.Boolean(true), ParameterValue.Uuid("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
+    )
+
+    pgConn.describePortal("")
+        .onSuccess {
+            if (it.rowDescription.size != 2 || it.rowDescription[0].dataTypeOid != PgTypes.UUID.oid || it.rowDescription[1].dataTypeOid != PgTypes.BOOL.oid) {
+                println("Failed test to describe portal")
+            }
+        }.onFailure {
+            println("Failed test to describe portal")
+        }
+
+    pgConn.closePortal("")
+
+    pgConn.closePreparedStatement("describe_me")
 }
 
 suspend fun simpleQueryStuff(pgConn: PgConnection) {
@@ -131,12 +162,14 @@ suspend fun simpleQueryStuff(pgConn: PgConnection) {
     pgConn.readSimpleQueryResponse()
         .onFailure { println("** FAILED ** test with error: $it") }
 
-    pgConn.executeSimpleQuery("select * from book_ref limit 100;")
+    pgConn.executeSimpleQuery("select * from bookings limit 100;")
     pgConn.readSimpleQueryResponse()
+        .onSuccess { if (it[0].dataRows.size != 100) println("Failed test query: select * from book_ref limit 100;") }
         .onFailure { println("** FAILED ** test with error: $it") }
 
     pgConn.executeSimpleQuery("select * from bookings limit 10;")
     pgConn.readSimpleQueryResponse()
+        .onSuccess { if (it[0].dataRows.size != 10) println("Failed test query: select * from bookings limit 10;") }
         .onFailure { println("** FAILED ** test with error: $it") }
 //
 //    pgConn.executeSimpleQuery("select fro links;")

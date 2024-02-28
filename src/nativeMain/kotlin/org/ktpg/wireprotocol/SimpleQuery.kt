@@ -7,6 +7,8 @@ import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import org.ktpg.*
 import org.ktpg.i32ToByteArray
+import org.ktpg.wireprotocol.backend.parseErrorOrNoticeResponseMessage
+import org.ktpg.wireprotocol.backend.readRowDescriptionMessage
 
 data class ColumnDescriptor(
     val name: String,
@@ -45,7 +47,7 @@ internal suspend fun sendSimpleQueryMessage(sendChannel: ByteWriteChannel, sql: 
 internal suspend fun readSimpleQueryResponseMessages(receiveChannel: ByteReadChannel): Result<List<SimpleQueryResponse>, SimpleQueryError> {
     var message: PgWireMessage
     // we want to populate a list of columns and list of rows
-    var columns = mutableListOf<ColumnDescriptor>()
+    var columns = emptyList<ColumnDescriptor>()
     var dataRows = mutableListOf<Map<String, String>>()
     var commandTag = ""
     var notices = mapOf<String,String>()
@@ -56,19 +58,7 @@ internal suspend fun readSimpleQueryResponseMessages(receiveChannel: ByteReadCha
 
         when(message.messageType) {
             MessageType.ROW_DESCRIPTION.value -> {
-                val columnCount = message.messageBytes.readShort()
-                // TODO: what if this is 0?
-                for (i in 0..<columnCount) {
-                    val name = readString(message.messageBytes)
-                    val tableOid = message.messageBytes.readInt()
-                    val columnId = message.messageBytes.readShort()
-                    val dataTypeOid = message.messageBytes.readInt()
-                    val dataTypeSize = message.messageBytes.readShort()
-                    val typeModifier = message.messageBytes.readInt()
-                    val formatCode = message.messageBytes.readShort()
-                    val c = ColumnDescriptor(name, tableOid, columnId, dataTypeOid, dataTypeSize, typeModifier, formatCode)
-                    columns.add(c)
-                }
+                columns = readRowDescriptionMessage(message.messageBytes)
             }
             MessageType.DATA_ROW.value -> {
                 val columnCount = message.messageBytes.readShort()

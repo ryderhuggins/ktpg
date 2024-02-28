@@ -3,19 +3,17 @@ package org.ktpg.wireprotocol
 import io.ktor.utils.io.core.*
 import org.ktpg.i32ToByteArray
 
-internal enum class StatementOrPortal { PreparedStatement, Portal }
-
-internal data class CloseMessage(
-    val closeTarget: StatementOrPortal,
+internal data class DescribeMessage(
+    val describeTarget: StatementOrPortal,
     val name: String
 )
 
-internal fun CloseMessage.serialize(): ByteArray {
+internal fun DescribeMessage.serialize(): ByteArray {
     val messageType = ByteArray(1)
-    messageType[0] = 'C'.code.toByte()
+    messageType[0] = 'D'.code.toByte()
 
     val targetType = ByteArray(1)
-    targetType[0] = when (this.closeTarget) {
+    targetType[0] = when (this.describeTarget) {
         StatementOrPortal.PreparedStatement -> 'S'.code.toByte()
         StatementOrPortal.Portal -> 'P'.code.toByte()
     }

@@ -61,3 +61,4 @@ Run unit tests:
 - [DataStation blog about Postgres wire protocol](https://datastation.multiprocess.io/blog/2022-02-08-the-world-of-postgresql-wire-compatibility.html)
 - [Multiplatform libraries](https://github.com/AAkira/Kotlin-Multiplatform-Libraries)
 - [Sample postgres database used in integration testing](https://postgrespro.com/community/demodb)
+- [Postgres for the wire](https://beta.pgcon.org/2014/schedule/attachments/330_postgres-for-the-wire.pdf)

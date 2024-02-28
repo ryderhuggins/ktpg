@@ -7,19 +7,27 @@ import com.github.michaelbull.result.*
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 
-import org.ktpg.*
 import org.ktpg.wireprotocol.*
+import org.ktpg.wireprotocol.backend.*
+import org.ktpg.wireprotocol.backend.readParameterDescriptionMessage
+import org.ktpg.wireprotocol.backend.readRowDescriptionMessage
 
 /**
  * TODO - for now i'm just putting exposed data structures here (i.e. supposed to be used by clients)
  */
-typealias ErrorResponse = Map<String,String>
 typealias ExecuteResponse = List<List<String>>
 
-class PreparedStatementSuccess
-class BindStatementSuccess
-
 sealed interface PgConnectionResult
+
+data class PreparedStatementDescription(
+    val parameters: List<PgTypes>,
+    val noticeResponse: NoticeResponse?
+)
+
+data class PortalDescription(
+    val rowDescription: List<ColumnDescriptor>,
+    val noticeResponse: NoticeResponse?
+)
 
 data class PgConnection internal constructor(
     val host: String,
@@ -150,37 +158,116 @@ suspend fun PgConnection.sendSyncMessage() {
 
 suspend fun PgConnection.closePreparedStatement(statementName: String) {
     val closeMessage = CloseMessage(
-        CloseTarget.PreparedStatement,
+        StatementOrPortal.PreparedStatement,
         statementName
     )
 
-    this.sendChannel.writeFully(closeMessage.serialize())
-    readUntilZ() ?: println("Error closing statement: $statementName")
+    this.sendChannel.writeFully(closeMessage.serialize() + SyncMessage.serialize())
+    this.readDescribeResponse()
 }
 
 suspend fun PgConnection.closePortal(portalName: String) {
     val closeMessage = CloseMessage(
-        CloseTarget.Portal,
+        StatementOrPortal.Portal,
         portalName
     )
 
-    this.sendChannel.writeFully(closeMessage.serialize())
-    readUntilZ() ?: println("Error closing portal: $portalName")
+    this.sendChannel.writeFully(closeMessage.serialize() + SyncMessage.serialize())
+    this.readDescribeResponse()
 }
 
-suspend fun PgConnection.readUntilZ(): Map<String,String>? {
+suspend fun PgConnection.describePreparedStatement(statementName: String): Result<PreparedStatementDescription, ErrorResponse> {
+    val describeMessage = DescribeMessage(
+        StatementOrPortal.PreparedStatement,
+        statementName
+    )
+
+    this.sendChannel.writeFully(describeMessage.serialize() + SyncMessage.serialize())
+    val response = readDescribeResponse()
+
+    var parameters = emptyList<PgTypes>()
+    var noticeResponse: NoticeResponse? = null
+
+    for (message in response) {
+        when (message) {
+            is DescribeResponseMessages.ErrorResponse -> {
+                return Err(message.err)
+            }
+            is DescribeResponseMessages.NoticeResponse -> {
+                noticeResponse = message.notice
+            }
+            is DescribeResponseMessages.ParameterDescription -> {
+                parameters = message.parameters
+            }
+            else -> {}
+        }
+    }
+
+    return Ok(PreparedStatementDescription(parameters, noticeResponse))
+}
+
+suspend fun PgConnection.describePortal(portalName: String): Result<PortalDescription, ErrorResponse> {
+    val describeMessage = DescribeMessage(
+        StatementOrPortal.Portal,
+        portalName
+    )
+
+    this.sendChannel.writeFully(describeMessage.serialize() + SyncMessage.serialize())
+    val response = readDescribeResponse()
+
+    var rowDescription = emptyList<ColumnDescriptor>()
+    var noticeResponse: NoticeResponse? = null
+
+    for (message in response) {
+        when (message) {
+            is DescribeResponseMessages.ErrorResponse -> {
+                return Err(message.err)
+            }
+            is DescribeResponseMessages.NoticeResponse -> {
+                noticeResponse = message.notice
+            }
+            is DescribeResponseMessages.RowDescription -> {
+                rowDescription = message.columns
+            }
+            else -> {}
+        }
+    }
+
+    return Ok(PortalDescription(rowDescription, noticeResponse))
+}
+
+suspend fun PgConnection.readDescribeResponse(): List<DescribeResponseMessages> {
+    // "happy path" message types include 1, t, T, 2, E, N, Z
     var message: PgWireMessage
-    var err: Map<String, String>? = null
+    val messages = mutableListOf<DescribeResponseMessages>()
 
     for (i in 0..999999) {
         message = readMessage(this.receiveChannel)
         when(message.messageType) {
-            MessageType.ERROR_RESPONSE.value -> err = parseErrorOrNoticeResponseMessage(message.messageBytes)
             MessageType.READY_FOR_QUERY.value -> break
-            else -> { }
+            MessageType.PARAMETER_DESCRIPTION.value -> {
+                val parameterDescription = readParameterDescriptionMessage(message.messageBytes)
+                messages.add(DescribeResponseMessages.ParameterDescription(parameterDescription))
+            }
+            MessageType.ROW_DESCRIPTION.value -> {
+                val columns = readRowDescriptionMessage(message.messageBytes)
+                messages.add(DescribeResponseMessages.RowDescription(columns))
+            }
+            MessageType.ERROR_RESPONSE.value -> {
+                val err = parseErrorOrNoticeResponseMessage(message.messageBytes)
+                messages.add(DescribeResponseMessages.ErrorResponse(err))
+            }
+            MessageType.NOTICE_RESPONSE.value -> {
+                val notice = parseErrorOrNoticeResponseMessage(message.messageBytes)
+                messages.add(DescribeResponseMessages.NoticeResponse(notice))
+            }
+            MessageType.PARSE_COMPLETE.value -> messages.add(DescribeResponseMessages.ParseComplete)
+            MessageType.BIND_COMPLETE.value -> messages.add(DescribeResponseMessages.BindComplete)
+            MessageType.CLOSE_COMPLETE.value -> messages.add(DescribeResponseMessages.CloseComplete)
+            else -> { println("got unexpected message type while parsing describe response: ${message.messageType}") }
         }
     }
-    return err
+    return messages
 }
 
 suspend fun PgConnection.sendFlushMessage() {

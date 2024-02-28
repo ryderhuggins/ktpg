@@ -1,6 +1,7 @@
 package org.ktpg.wireprotocol
 
 enum class PgTypes(val oid: Int) {
+    UNKNOWN(0),
     BOOL(16),
     CHAR(18),
     INT8(20),
@@ -26,5 +27,11 @@ enum class PgTypes(val oid: Int) {
     TSTZRANGE(3908),
     DATERANGE(3912),
     ANY(2276),
-    VOID(2278)
+    VOID(2278);
+
+
+    companion object {
+        private val VALUES = values()
+        fun getByValue(value: Int) = VALUES.firstOrNull { it.oid == value }
+    }
 }
