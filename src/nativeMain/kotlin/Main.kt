@@ -6,9 +6,8 @@ import org.ktpg.wireprotocol.PgTypes
 fun main() {
     runBlocking {
         // change username to ryderhuggins for no password, secure1 for cleartext password, secure2 for SCRAM-SHA-256
-        val (pgConn, _) = getConnection("127.0.0.1", 5432, "secure2", "password123", "demo", emptyMap()).getOrThrow {
-            Throwable(it.errorString)
-        }
+        val (pgConn, _) = getConnection("127.0.0.1", 5432, "secure2", "password123", "demo", emptyMap())
+            .getOrThrow { Throwable(it.errorString) }
 
         launch(Dispatchers.IO) {
             simpleQueryStuff(pgConn)
@@ -64,7 +63,7 @@ private suspend fun preparedStatementStuff(pgConn: PgConnection) {
 
     pgConn.prepareStatement(
         "",
-        "select * from bookings where total_amount > $1;",
+        "select * from bookings where total_amount > $1 order by total_amount desc;",
         listOf(PgTypes.NUMERIC)
     )
 
@@ -73,8 +72,13 @@ private suspend fun preparedStatementStuff(pgConn: PgConnection) {
         parameterValues = listOf(ParameterValue.Numeric(50000.00))
     )
 
-    if (pgConn.execute().size != 144164) {
-        println("FAILED TEST: select * from bookings where total_amount > \$1;")
+    var results = pgConn.execute()
+    if (results.size != 144164) {
+        println("FAILED TEST (size): select * from bookings where total_amount > \$1 order by total_amount desc;")
+    }
+    if (results[0][2] != "1204500.00") {
+        println("FAILED TEST (value): select * from bookings where total_amount > \$1 order by total_amount desc;")
+        println("\texpected: 1204500.00, got: ${results[0][2]}")
     }
 
     // TODO some kind of test for serializing an absurdly large numeric number
@@ -90,8 +94,13 @@ private suspend fun preparedStatementStuff(pgConn: PgConnection) {
         parameterValues = listOf(ParameterValue.Uuid("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
     )
 
-    if (pgConn.execute().size != 1) {
+    results = pgConn.execute()
+    if (results.size != 1) {
         println("FAILED TEST: select * from things where thing_id = \$1;")
+    }
+    if (results[0][1] != "t") {
+        println("FAILED TEST: select * from things where thing_id = \$1;")
+        println("\texpected: t, got: ${results[0][1]}")
     }
 
     pgConn.prepareStatement(
@@ -159,6 +168,7 @@ suspend fun simpleQueryStuff(pgConn: PgConnection) {
 
     pgConn.executeSimpleQuery("DELETE FROM bookings where book_ref = '222223';")
     pgConn.readSimpleQueryResponse()
+        .onSuccess { if (it[0].commandTag != "DELETE 1") println("FAILED TEST: DELETE FROM bookings where book_ref = '222223';") }
         .onFailure { println("** FAILED ** test with error: $it") }
 
     pgConn.executeSimpleQuery("select * from bookings limit 100;")
