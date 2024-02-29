@@ -1,15 +1,14 @@
 
-Biggest missing features IMO
+Important gaps
 - SSL/TLS (& channel binding for SASL/SCRAM)
 - more data types to be serialized in bind(...) calls
-    - also support binary serialization - it's only text now
-- handle binary format in response from server
+    - also support binary serialization/deserialization - it's only text now
 - proper integration test setup
 - more unit tests
-- remaining client commands: CancelRequest, Close, Describe, FunctionCall, among others
+- remaining client commands: CancelRequest, FunctionCall, Copy among others
+- proper logging
 
 Other TODOs
-- Change print statements to proper logging
 - Create a Connect function that just takes a connection string
 - Parse configuration from environment variables
 - Proper native/KMP build setup -> hardcoded for my intel mac setup right now
