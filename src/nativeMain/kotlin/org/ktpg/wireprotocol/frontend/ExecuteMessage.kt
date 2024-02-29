@@ -1,7 +1,7 @@
-package org.ktpg.wireprotocol.frontend
+package io.github.ryderhuggins.ktpg.wireprotocol.frontend
 
 import io.ktor.utils.io.core.toByteArray
-import org.ktpg.wireprotocol.i32ToByteArray
+import io.github.ryderhuggins.ktpg.wireprotocol.i32ToByteArray
 
 internal data class ExecuteMessage(
     val portalName: String = "",

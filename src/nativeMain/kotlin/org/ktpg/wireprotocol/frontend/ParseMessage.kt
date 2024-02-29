@@ -1,10 +1,10 @@
-package org.ktpg.wireprotocol.frontend
+package io.github.ryderhuggins.ktpg.wireprotocol.frontend
 
 import io.ktor.utils.io.core.*
-import org.ktpg.wireprotocol.i32ToByteArray
-import org.ktpg.wireprotocol.toAscii
-import org.ktpg.wireprotocol.toByteArray
-import org.ktpg.wireprotocol.PgTypes
+import io.github.ryderhuggins.ktpg.wireprotocol.i32ToByteArray
+import io.github.ryderhuggins.ktpg.wireprotocol.toAscii
+import io.github.ryderhuggins.ktpg.wireprotocol.toByteArray
+import io.github.ryderhuggins.ktpg.wireprotocol.PgTypes
 
 
 internal data class ParseMessage(

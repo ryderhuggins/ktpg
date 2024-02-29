@@ -7,14 +7,14 @@ import com.github.michaelbull.result.*
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 
-import org.ktpg.wireprotocol.*
-import org.ktpg.wireprotocol.backend.*
-import org.ktpg.wireprotocol.backend.readParameterDescriptionMessage
-import org.ktpg.wireprotocol.backend.readRowDescriptionMessage
-import org.ktpg.wireprotocol.frontend.*
-import org.ktpg.wireprotocol.frontend.BindMessage
-import org.ktpg.wireprotocol.frontend.DescribeMessage
-import org.ktpg.wireprotocol.frontend.serialize
+import io.github.ryderhuggins.ktpg.wireprotocol.*
+import io.github.ryderhuggins.ktpg.wireprotocol.backend.*
+import io.github.ryderhuggins.ktpg.wireprotocol.backend.readParameterDescriptionMessage
+import io.github.ryderhuggins.ktpg.wireprotocol.backend.readRowDescriptionMessage
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.*
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.BindMessage
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.DescribeMessage
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.serialize
 
 /**
  * TODO - for now i'm just putting exposed data structures here (i.e. supposed to be used by clients)

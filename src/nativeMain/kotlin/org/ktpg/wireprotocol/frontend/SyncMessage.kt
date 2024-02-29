@@ -1,6 +1,6 @@
-package org.ktpg.wireprotocol.frontend
+package io.github.ryderhuggins.ktpg.wireprotocol.frontend
 
-import org.ktpg.wireprotocol.i32ToByteArray
+import io.github.ryderhuggins.ktpg.wireprotocol.i32ToByteArray
 
 internal data object SyncMessage
 internal data object FlushMessage

@@ -1,9 +1,9 @@
-package org.ktpg.wireprotocol.backend
+package io.github.ryderhuggins.ktpg.wireprotocol.backend
 
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
-import org.ktpg.wireprotocol.PgTypes
-import org.ktpg.wireprotocol.frontend.ColumnDescriptor
+import io.github.ryderhuggins.ktpg.wireprotocol.PgTypes
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.ColumnDescriptor
 
 typealias ErrorResponse = Map<String,String>
 typealias NoticeResponse = Map<String,String>

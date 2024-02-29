@@ -2,7 +2,7 @@ plugins {
     kotlin("multiplatform") version "2.0.0-Beta3"
 }
 
-group = "org.ktpg"
+group = "io.github.ryderhuggins"
 version = "1.0-SNAPSHOT"
 
 repositories {

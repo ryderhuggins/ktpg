@@ -1,8 +1,8 @@
-package org.ktpg.wireprotocol.frontend
+package io.github.ryderhuggins.ktpg.wireprotocol.frontend
 
 import io.ktor.utils.io.core.*
-import org.ktpg.wireprotocol.i32ToByteArray
-import org.ktpg.wireprotocol.toByteArray
+import io.github.ryderhuggins.ktpg.wireprotocol.i32ToByteArray
+import io.github.ryderhuggins.ktpg.wireprotocol.toByteArray
 
 enum class ParameterFormat(val format: Short) {
     TEXT(0),

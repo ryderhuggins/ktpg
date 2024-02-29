@@ -1,7 +1,7 @@
-package org.ktpg.wireprotocol.backend
+package io.github.ryderhuggins.ktpg.wireprotocol.backend
 
 import io.ktor.utils.io.core.*
-import org.ktpg.wireprotocol.PgTypes
+import io.github.ryderhuggins.ktpg.wireprotocol.PgTypes
 
 
 internal fun readParameterDescriptionMessage(

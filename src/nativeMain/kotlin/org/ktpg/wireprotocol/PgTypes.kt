@@ -1,4 +1,4 @@
-package org.ktpg.wireprotocol
+package io.github.ryderhuggins.ktpg.wireprotocol
 
 enum class PgTypes(val oid: Int) {
     UNKNOWN(0),

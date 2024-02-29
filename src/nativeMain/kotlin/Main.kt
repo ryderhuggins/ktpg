@@ -1,7 +1,7 @@
 import com.github.michaelbull.result.*
 import kotlinx.coroutines.*
-import org.ktpg.wireprotocol.frontend.ParameterValue
-import org.ktpg.wireprotocol.PgTypes
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.ParameterValue
+import io.github.ryderhuggins.ktpg.wireprotocol.PgTypes
 
 fun main() {
     runBlocking {

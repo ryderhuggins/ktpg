@@ -1,6 +1,6 @@
-package org.ktpg
+package io.github.ryderhuggins.ktpg
 
-import org.ktpg.wireprotocol.getScramClientFinalMessage
+import io.github.ryderhuggins.ktpg.wireprotocol.getScramClientFinalMessage
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.test.Test
 

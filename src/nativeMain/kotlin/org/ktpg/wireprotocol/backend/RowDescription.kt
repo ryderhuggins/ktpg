@@ -1,8 +1,8 @@
-package org.ktpg.wireprotocol.backend
+package io.github.ryderhuggins.ktpg.wireprotocol.backend
 
 import io.ktor.utils.io.core.*
-import org.ktpg.wireprotocol.frontend.ColumnDescriptor
-import org.ktpg.wireprotocol.readString
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.ColumnDescriptor
+import io.github.ryderhuggins.ktpg.wireprotocol.readString
 
 internal fun readRowDescriptionMessage(
     messageBytes: ByteReadPacket,

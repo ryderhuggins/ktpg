@@ -1,8 +1,8 @@
-package org.ktpg.wireprotocol
+package io.github.ryderhuggins.ktpg.wireprotocol
 
 import io.ktor.util.*
-import org.ktpg.wireprotocol.frontend.SimpleQuery
-import org.ktpg.wireprotocol.frontend.serialize
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.SimpleQuery
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.serialize
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.test.Test
 

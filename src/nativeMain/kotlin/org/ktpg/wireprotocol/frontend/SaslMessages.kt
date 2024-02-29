@@ -1,7 +1,7 @@
-package org.ktpg.wireprotocol.frontend
+package io.github.ryderhuggins.ktpg.wireprotocol.frontend
 
-import org.ktpg.wireprotocol.i32ToByteArray
-import org.ktpg.wireprotocol.toAscii
+import io.github.ryderhuggins.ktpg.wireprotocol.i32ToByteArray
+import io.github.ryderhuggins.ktpg.wireprotocol.toAscii
 
 internal data class SaslInitialResponse(
     val gs2Header: String,

@@ -1,4 +1,4 @@
-package org.ktpg.wireprotocol
+package io.github.ryderhuggins.ktpg.wireprotocol
 
 import io.ktor.util.*
 import io.ktor.utils.io.core.*
@@ -6,7 +6,7 @@ import org.kotlincrypto.hash.sha2.SHA256
 import org.kotlincrypto.macs.hmac.sha2.HmacSHA256
 import kotlin.experimental.xor
 
-import org.ktpg.wireprotocol.frontend.ClientFinalMessage
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.ClientFinalMessage
 
 internal fun xorByteArrays(b1: ByteArray, b2: ByteArray): ByteArray {
     val res = ByteArray(b1.size)

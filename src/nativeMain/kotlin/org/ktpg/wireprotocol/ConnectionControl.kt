@@ -1,15 +1,15 @@
-package org.ktpg.wireprotocol
+package io.github.ryderhuggins.ktpg.wireprotocol
 
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
-import org.ktpg.wireprotocol.backend.BackendMessageType
-import org.ktpg.wireprotocol.backend.readMessage
-import org.ktpg.wireprotocol.frontend.StartupMessage
-import org.ktpg.wireprotocol.frontend.TerminationMessage
-import org.ktpg.wireprotocol.frontend.serialize
+import io.github.ryderhuggins.ktpg.wireprotocol.backend.BackendMessageType
+import io.github.ryderhuggins.ktpg.wireprotocol.backend.readMessage
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.StartupMessage
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.TerminationMessage
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.serialize
 
 
 data class StartupParameters(val parameterStatusMap: Map<String,String>, val backendKeyDataMap: Map<String,Int>)

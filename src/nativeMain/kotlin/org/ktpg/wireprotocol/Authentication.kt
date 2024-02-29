@@ -1,4 +1,4 @@
-package org.ktpg.wireprotocol
+package io.github.ryderhuggins.ktpg.wireprotocol
 
 import PgConnection
 import com.github.michaelbull.result.Err
@@ -6,12 +6,12 @@ import com.github.michaelbull.result.Result
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import org.kotlincrypto.hash.md.MD5
-import org.ktpg.wireprotocol.backend.BackendMessageType
-import org.ktpg.wireprotocol.backend.readMessage
-import org.ktpg.wireprotocol.frontend.CleartextPasswordMessage
-import org.ktpg.wireprotocol.frontend.SaslInitialResponse
-import org.ktpg.wireprotocol.frontend.StartupMessage
-import org.ktpg.wireprotocol.frontend.serialize
+import io.github.ryderhuggins.ktpg.wireprotocol.backend.BackendMessageType
+import io.github.ryderhuggins.ktpg.wireprotocol.backend.readMessage
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.CleartextPasswordMessage
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.SaslInitialResponse
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.StartupMessage
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.serialize
 
 sealed interface AuthenticationResponse
 data object AuthenticationOk : AuthenticationResponse

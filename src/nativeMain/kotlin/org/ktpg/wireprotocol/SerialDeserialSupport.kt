@@ -1,4 +1,4 @@
-package org.ktpg.wireprotocol
+package io.github.ryderhuggins.ktpg.wireprotocol
 
 import io.ktor.utils.io.core.*
 

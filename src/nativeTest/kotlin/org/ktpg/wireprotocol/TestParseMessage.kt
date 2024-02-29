@@ -1,8 +1,8 @@
-package org.ktpg.wireprotocol
+package io.github.ryderhuggins.ktpg.wireprotocol
 
 import io.ktor.util.*
-import org.ktpg.wireprotocol.frontend.ParseMessage
-import org.ktpg.wireprotocol.frontend.serialize
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.ParseMessage
+import io.github.ryderhuggins.ktpg.wireprotocol.frontend.serialize
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.test.Test
 
